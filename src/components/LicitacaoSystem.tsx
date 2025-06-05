@@ -65,44 +65,17 @@ export function LicitacaoSystem() {
     const loadFilters = async () => {
       setLoadingFilters(true);
       try {
-        // Simulação da API do PNCP para filtros
-        const mockFilters = {
-          orgaos: [
-            { codigo: '123', nome: 'Ministério da Educação' },
-            { codigo: '456', nome: 'Ministério da Saúde' },
-            { codigo: '789', nome: 'Prefeitura Municipal' },
-          ],
-          ufs: ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'],
-          municipios: [
-            { id: '1', descricao: 'São Paulo' },
-            { id: '2', descricao: 'Rio de Janeiro' },
-            { id: '3', descricao: 'Brasília' },
-            { id: '4', descricao: 'Salvador' },
-          ],
-          modalidadesContratacao: [
-            { id: '1', descricao: 'Pregão Eletrônico' },
-            { id: '2', descricao: 'Concorrência' },
-            { id: '3', descricao: 'Tomada de Preços' },
-            { id: '4', descricao: 'Convite' },
-          ],
-          esferas: [
-            { id: '1', descricao: 'Federal' },
-            { id: '2', descricao: 'Estadual' },
-            { id: '3', descricao: 'Municipal' },
-          ],
-          poderes: [
-            { id: '1', descricao: 'Executivo' },
-            { id: '2', descricao: 'Legislativo' },
-            { id: '3', descricao: 'Judiciário' },
-          ],
-        };
-        
-        setFilterOptions(mockFilters);
+        const response = await fetch(`https://pncp.gov.br/api/search/filters?tipos_documento=${tipoDoc}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setFilterOptions(camelizeKeys(data));
       } catch (error) {
         console.error('Erro ao carregar filtros:', error);
         toast({
           title: "Erro",
-          description: "Não foi possível carregar os filtros. Tente novamente.",
+          description: "Não foi possível carregar os filtros. Verifique sua conexão.",
           variant: "destructive",
         });
       } finally {
@@ -122,7 +95,7 @@ export function LicitacaoSystem() {
   const buildParams = useCallback(() => {
     const params: any = {
       tipos_documento: tipoDoc,
-      status,
+      status: status === 'todos' ? undefined : status,
       ordenacao: '-data',
       pagina: page + 1,
       tam_pagina: pageSize,
@@ -138,6 +111,13 @@ export function LicitacaoSystem() {
       }
     });
     
+    // Remove parâmetros undefined
+    Object.keys(params).forEach(key => {
+      if (params[key] === undefined) {
+        delete params[key];
+      }
+    });
+    
     return params;
   }, [tipoDoc, status, keyword, filters, page, pageSize]);
 
@@ -145,37 +125,37 @@ export function LicitacaoSystem() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Simulação da API do PNCP
-      const mockData = {
-        total: 150,
-        conteudo: Array.from({ length: pageSize }, (_, i) => {
-          const id = page * pageSize + i + 1;
-          return {
-            id,
-            numeroProcesso: `${id.toString().padStart(8, '0')}/2024`,
-            objeto: `Objeto da licitação ${id} - ${keyword || 'Aquisição de materiais e serviços'}`,
-            dataPublicacao: new Date().toLocaleDateString('pt-BR'),
-            valor: (Math.random() * 1000000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-            status: status === 'todos' ? ['Vigente', 'Encerrada', 'Em andamento'][Math.floor(Math.random() * 3)] : status,
-            orgao: filterOptions.orgaos?.[Math.floor(Math.random() * (filterOptions.orgaos?.length || 1))]?.nome || 'Órgão Público',
-          };
-        }),
-      };
+      const params = buildParams();
+      const queryString = new URLSearchParams(params).toString();
+      const url = `https://pncp.gov.br/api/search/?${queryString}`;
       
-      setRows(mockData.conteudo);
-      setRowCount(mockData.total);
+      console.log('Fazendo consulta:', url);
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Dados recebidos:', data);
+      
+      const resultados = data.conteudo || data.resultados || [];
+      setRows(resultados);
+      setRowCount(data.total || resultados.length);
       
       toast({
         title: "Consulta realizada",
-        description: `${mockData.total} registros encontrados`,
+        description: `${data.total || resultados.length} registros encontrados`,
       });
     } catch (error) {
       console.error('Erro na busca:', error);
       toast({
         title: "Erro na consulta",
-        description: "Não foi possível realizar a consulta. Tente novamente.",
+        description: "Não foi possível realizar a consulta. Verifique sua conexão ou tente novamente.",
         variant: "destructive",
       });
+      setRows([]);
+      setRowCount(0);
     } finally {
       setLoading(false);
     }
