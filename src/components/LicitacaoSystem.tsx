@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Search, FileText, FileCheck, FileContract, Loader2 } from 'lucide-react';
+import { Search, FileText, FileCheck, Loader2 } from 'lucide-react';
 import { LicitacaoTable } from './LicitacaoTable';
 import { FilterPanel } from './FilterPanel';
 import { useToast } from '@/hooks/use-toast';
@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 const tiposDocumento = [
   { value: 'edital', label: 'Editais', icon: FileText },
   { value: 'ata', label: 'Atas', icon: FileCheck },
-  { value: 'contrato', label: 'Contratos', icon: FileContract },
+  { value: 'contrato', label: 'Contratos', icon: FileText },
 ];
 
 // Opções de status por tipo de documento
