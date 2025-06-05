@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -139,13 +138,29 @@ export function LicitacaoSystem() {
       const data = await response.json();
       console.log('Dados recebidos:', data);
       
-      const resultados = data.conteudo || data.resultados || [];
-      setRows(resultados);
-      setRowCount(data.total || resultados.length);
+      // Corrigindo o mapeamento dos dados - a API retorna em 'items'
+      const resultados = data.items || data.conteudo || data.resultados || [];
+      
+      // Processando os dados para que tenham IDs únicos e campos consistentes
+      const processedRows = resultados.map((item, index) => ({
+        ...item,
+        id: item.id || item.uid || `${item.numero_controle_pncp || index}`,
+        numeroProcesso: item.numero_controle_pncp || item.numeroProcesso,
+        objeto: item.description || item.objeto,
+        orgao: item.orgao_nome || item.orgao,
+        dataPublicacao: item.data_publicacao_pncp ? 
+          new Date(item.data_publicacao_pncp).toLocaleDateString('pt-BR') : 
+          item.dataPublicacao,
+        status: item.situacao_nome || item.status,
+        valor: item.valor_global || item.valor || '-'
+      }));
+      
+      setRows(processedRows);
+      setRowCount(data.total || data.count || processedRows.length);
       
       toast({
         title: "Consulta realizada",
-        description: `${data.total || resultados.length} registros encontrados`,
+        description: `${processedRows.length} registros encontrados`,
       });
     } catch (error) {
       console.error('Erro na busca:', error);
