@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Search, FileText, FileCheck, Loader2 } from 'lucide-react';
+import { Search, FileText, FileCheck, Loader2, Filter } from 'lucide-react';
 import { LicitacaoTable } from './LicitacaoTable';
 import { FilterPanel } from './FilterPanel';
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +57,7 @@ export function LicitacaoSystem() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingFilters, setLoadingFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   
   const { toast } = useToast();
 
@@ -201,35 +203,51 @@ export function LicitacaoSystem() {
   const IconComponent = currentTypeIcon;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-          <CardTitle className="flex items-center gap-2 text-2xl">
-            <Search className="h-6 w-6" />
-            Sistema de Acompanhamento de Licitações
-          </CardTitle>
-          <CardDescription className="text-blue-100">
-            Consulte editais, atas e contratos do Portal Nacional de Contratações Públicas (PNCP)
-          </CardDescription>
-        </CardHeader>
-      </Card>
+    <div className="space-y-8 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+      {/* Header Moderno */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 p-8 text-white shadow-2xl">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+              <Search className="h-8 w-8" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Sistema de Licitações</h1>
+              <p className="text-blue-100 text-lg">Portal Nacional de Contratações Públicas (PNCP)</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Filtros Principais */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IconComponent className="h-5 w-5" />
-            Filtros de Consulta
+      <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <IconComponent className="h-5 w-5 text-blue-600" />
+              <span className="text-xl">Consulta de Documentos</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              Filtros Avançados
+            </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Tipo de Documento */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <CardContent className="space-y-6">
+          {/* Controles Principais */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="tipo-documento">Tipo de Documento</Label>
+              <Label htmlFor="tipo-documento" className="text-sm font-medium text-gray-700">
+                Tipo de Documento
+              </Label>
               <Select value={tipoDoc} onValueChange={setTipoDoc}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 border-2 border-gray-200 focus:border-blue-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -248,22 +266,27 @@ export function LicitacaoSystem() {
               </Select>
             </div>
 
-            {/* Palavra-chave */}
             <div className="md:col-span-3 space-y-2">
-              <Label htmlFor="keyword">Palavra-chave</Label>
-              <Input
-                id="keyword"
-                placeholder="Digite palavras-chave para buscar..."
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
+              <Label htmlFor="keyword" className="text-sm font-medium text-gray-700">
+                Palavra-chave
+              </Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  id="keyword"
+                  placeholder="Digite palavras-chave para buscar..."
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pl-10 h-11 border-2 border-gray-200 focus:border-blue-500"
+                />
+              </div>
             </div>
           </div>
 
           {/* Status */}
-          <div className="space-y-2">
-            <Label>Status</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium text-gray-700">Status</Label>
             <RadioGroup
               value={status}
               onValueChange={setStatus}
@@ -271,8 +294,8 @@ export function LicitacaoSystem() {
             >
               {statusOptions[tipoDoc as keyof typeof statusOptions].map((option) => (
                 <div key={option.value} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option.value} id={option.value} />
-                  <Label htmlFor={option.value} className="cursor-pointer">
+                  <RadioGroupItem value={option.value} id={option.value} className="border-2" />
+                  <Label htmlFor={option.value} className="cursor-pointer text-sm font-medium">
                     {option.label}
                   </Label>
                 </div>
@@ -280,33 +303,37 @@ export function LicitacaoSystem() {
             </RadioGroup>
           </div>
 
-          <Separator />
-
           {/* Filtros Avançados */}
-          <FilterPanel
-            filterOptions={filterOptions}
-            filters={filters}
-            onFiltersChange={setFilters}
-            tipoDoc={tipoDoc}
-            loading={loadingFilters}
-          />
+          {showFilters && (
+            <div className="animate-fade-in">
+              <Separator className="my-6" />
+              <FilterPanel
+                filterOptions={filterOptions}
+                filters={filters}
+                onFiltersChange={setFilters}
+                tipoDoc={tipoDoc}
+                loading={loadingFilters}
+              />
+            </div>
+          )}
 
           {/* Botão de Busca */}
-          <div className="flex justify-end">
+          <div className="flex justify-center pt-4">
             <Button 
               onClick={handleSearch} 
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700"
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105"
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Consultando...
                 </>
               ) : (
                 <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Consultar
+                  <Search className="mr-2 h-5 w-5" />
+                  Consultar Documentos
                 </>
               )}
             </Button>
@@ -316,16 +343,16 @@ export function LicitacaoSystem() {
 
       {/* Resultados */}
       {rows.length > 0 && (
-        <Card>
-          <CardHeader>
+        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-t-lg">
             <div className="flex items-center justify-between">
-              <CardTitle>Resultados da Consulta</CardTitle>
-              <Badge variant="secondary">
+              <CardTitle className="text-xl">Resultados da Consulta</CardTitle>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1 text-sm font-medium">
                 {rowCount} registros encontrados
               </Badge>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <LicitacaoTable
               data={rows}
               tipoDoc={tipoDoc}
