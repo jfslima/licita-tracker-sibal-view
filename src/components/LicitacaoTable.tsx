@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Table,
@@ -76,29 +75,45 @@ export function LicitacaoTable({
   };
 
   const openDocument = (item: any) => {
-    // Construir URL baseada no tipo de documento e dados disponíveis
-    let url = '';
+    console.log('Item clicado:', item);
     
-    if (tipoDoc === 'edital' && item.numeroProcesso) {
-      // URL para editais no PNCP
-      url = `https://pncp.gov.br/app/editais/${item.numeroProcesso}`;
-    } else if (tipoDoc === 'ata' && item.numeroAta) {
-      // URL para atas no PNCP
-      url = `https://pncp.gov.br/app/atas/${item.numeroAta}`;
-    } else if (tipoDoc === 'contrato' && item.numeroContrato) {
-      // URL para contratos no PNCP
-      url = `https://pncp.gov.br/app/contratos/${item.numeroContrato}`;
-    } else if (item.link || item.url) {
-      // Se tiver link direto nos dados
-      url = item.link || item.url;
-    } else {
-      // Fallback: busca geral no PNCP
-      const searchTerm = item.numeroProcesso || item.objeto || '';
-      url = `https://pncp.gov.br/app/busca?q=${encodeURIComponent(searchTerm)}`;
+    // Verifica se há URL direta no item
+    if (item.item_url) {
+      const fullUrl = `https://pncp.gov.br${item.item_url}`;
+      console.log('Abrindo URL:', fullUrl);
+      window.open(fullUrl, '_blank', 'noopener,noreferrer');
+      return;
     }
     
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+    // Constrói URL baseada no numero_controle_pncp
+    if (item.numero_controle_pncp) {
+      let baseUrl = '';
+      
+      if (tipoDoc === 'edital') {
+        baseUrl = 'https://pncp.gov.br/app/editais/';
+      } else if (tipoDoc === 'ata') {
+        baseUrl = 'https://pncp.gov.br/app/atas/';
+      } else if (tipoDoc === 'contrato') {
+        baseUrl = 'https://pncp.gov.br/app/contratos/';
+      }
+      
+      if (baseUrl) {
+        const fullUrl = `${baseUrl}${item.numero_controle_pncp}`;
+        console.log('Abrindo URL construída:', fullUrl);
+        window.open(fullUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
+    }
+    
+    // Fallback: busca geral no PNCP
+    const searchTerm = item.title || item.description || item.objeto || '';
+    if (searchTerm) {
+      const searchUrl = `https://pncp.gov.br/app/busca?q=${encodeURIComponent(searchTerm)}`;
+      console.log('Abrindo busca:', searchUrl);
+      window.open(searchUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      console.error('Não foi possível determinar a URL para o documento:', item);
+      alert('Não foi possível abrir o documento. Dados insuficientes.');
     }
   };
 
@@ -156,37 +171,40 @@ export function LicitacaoTable({
                       <FileText className="h-3 w-3 text-blue-600" />
                     </div>
                     <span className="text-sm">
-                      {item.numeroProcesso || item.numeroAta || item.numeroContrato || 'N/A'}
+                      {item.numeroProcesso || item.numeroAta || item.numeroContrato || item.numero_controle_pncp || 'N/A'}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="max-w-md">
-                    <p className="text-sm line-clamp-2" title={item.objeto}>
-                      {item.objeto || 'Objeto não informado'}
+                    <p className="text-sm line-clamp-2" title={item.description || item.objeto}>
+                      {item.description || item.objeto || 'Objeto não informado'}
                     </p>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="max-w-xs">
-                    <p className="text-sm text-gray-600 truncate" title={item.orgao}>
-                      {item.orgao || 'Órgão não informado'}
+                    <p className="text-sm text-gray-600 truncate" title={item.orgao_nome || item.orgao}>
+                      {item.orgao_nome || item.orgao || 'Órgão não informado'}
                     </p>
                   </div>
                 </TableCell>
                 <TableCell>
                   <span className="text-sm text-gray-600">
-                    {item.dataPublicacao || item.vigenciaInicial || 'N/A'}
+                    {item.data_publicacao_pncp ? 
+                      new Date(item.data_publicacao_pncp).toLocaleDateString('pt-BR') : 
+                      item.dataPublicacao || item.vigenciaInicial || 'N/A'
+                    }
                   </span>
                 </TableCell>
                 <TableCell>
-                  <Badge className={`${getStatusColor(item.status)} border font-medium`}>
-                    {formatStatus(item.status) || 'N/A'}
+                  <Badge className={`${getStatusColor(item.situacao_nome || item.status)} border font-medium`}>
+                    {formatStatus(item.situacao_nome || item.status) || 'N/A'}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <span className="text-sm font-medium text-green-700">
-                    {formatCurrency(item.valor)}
+                    {formatCurrency(item.valor_global || item.valor)}
                   </span>
                 </TableCell>
                 <TableCell className="text-right">
@@ -196,7 +214,7 @@ export function LicitacaoTable({
                       size="sm"
                       onClick={() => openDocument(item)}
                       className="hover:bg-blue-100 hover:text-blue-700 transition-colors"
-                      title="Visualizar documento"
+                      title="Visualizar documento no PNCP"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
