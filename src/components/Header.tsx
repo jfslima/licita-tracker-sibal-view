@@ -17,9 +17,9 @@ export function Header() {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  LicitaBR Pro
+                  SIBAL
                 </h1>
-                <p className="text-xs text-gray-500">Inteligência em Licitações</p>
+                <p className="text-xs text-gray-500">Sistema Brasileiro de Acompanhamento de Licitações</p>
               </div>
             </div>
             <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">

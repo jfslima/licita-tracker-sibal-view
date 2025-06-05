@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { TrendingUp, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 
@@ -14,8 +13,8 @@ export function Footer() {
                 <TrendingUp className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">LicitaBR Pro</h3>
-                <p className="text-sm text-gray-400">Inteligência em Licitações</p>
+                <h3 className="text-xl font-bold text-white">SIBAL</h3>
+                <p className="text-sm text-gray-400">Sistema Brasileiro de Acompanhamento de Licitações</p>
               </div>
             </div>
             <p className="text-gray-400 mb-6">
@@ -72,11 +71,10 @@ export function Footer() {
             </div>
           </div>
         </div>
-
         <div className="border-t border-gray-800 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © 2024 LicitaBR Pro. Todos os direitos reservados.
+              © 2024 SIBAL. Todos os direitos reservados.
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <a href="#" className="text-gray-400 hover:text-blue-400 text-sm transition-colors">
