@@ -18,7 +18,7 @@ export function FilterPanel({ filterOptions, filters, onFiltersChange, tipoDoc, 
   const handleFilterChange = (field: string, value: string) => {
     onFiltersChange((prev: any) => ({
       ...prev,
-      [field]: value || undefined,
+      [field]: value === 'todos' ? undefined : value,
     }));
   };
 
@@ -50,14 +50,14 @@ export function FilterPanel({ filterOptions, filters, onFiltersChange, tipoDoc, 
       <div className="space-y-2">
         <Label htmlFor={field}>{label}</Label>
         <Select
-          value={filters[field] || ''}
+          value={filters[field] || 'todos'}
           onValueChange={(value) => handleFilterChange(field, value)}
         >
           <SelectTrigger>
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos</SelectItem>
+            <SelectItem value="todos">Todos</SelectItem>
             {list?.map((item) => {
               const value = item[valueKey] || item;
               const label = item[labelKey] || item.nome || item;
