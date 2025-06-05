@@ -87,37 +87,38 @@ export function LicitacaoTable({
       return;
     }
     
-    // Coleta os campos aceitando ambos os formatos (snake_case e camelCase)
-    const orgao = item.orgao_cnpj ?? item.orgaoCnpj;
-    const ano = item.ano;
-    const seq = item.numero_sequencial ?? item.numeroSequencial;
-    const seqAta = item.numero_sequencial_compra_ata ?? item.numeroSequencialCompraAta;
+    // Captura todas as variações de campos que o PNCP pode usar
+    const orgao = item.orgao_cnpj ?? item.orgaoCnpj ?? item.cnpjOrgaoGerenciador;
+    const ano = item.ano ?? item.anoPublicacao ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
+    const seq = item.numero_sequencial
+             ?? item.numeroSequencial
+             ?? item.numeroEdital                // para editais
+             ?? item.numeroContratoApostilamento; // para contratos/ARP
+
+    const seqAta = item.numero_sequencial_compra_ata
+                ?? item.numeroSequencialCompraAta
+                ?? item.numeroControleAta;         // para atas
     
     console.log('Dados extraídos:', { orgao, ano, seq, seqAta, tipoDoc });
     
-    // Se não tem item_url, tenta construir baseado nos dados
-    if (orgao && ano && seq) {
-      // Para editais/avisos de contratação direta
-      if (tipoDoc === 'edital') {
-        const constructedUrl = `https://pncp.gov.br/compras/${orgao}/${ano}/${seq}`;
-        console.log('URL construída para edital:', constructedUrl);
-        window.open(constructedUrl, '_blank', 'noopener,noreferrer');
-        return;
-      }
-      
-      // Para contratos
-      if (tipoDoc === 'contrato') {
-        const constructedUrl = `https://pncp.gov.br/contratos/${orgao}/${ano}/${seq}`;
-        console.log('URL construída para contrato:', constructedUrl);
-        window.open(constructedUrl, '_blank', 'noopener,noreferrer');
-        return;
-      }
+    // Tenta construir URLs específicas baseado no tipo de documento
+    if (tipoDoc === 'edital' && orgao && ano && seq) {
+      const constructedUrl = `https://pncp.gov.br/compras/${orgao}/${ano}/${seq}`;
+      console.log('URL construída para edital:', constructedUrl);
+      window.open(constructedUrl, '_blank', 'noopener,noreferrer');
+      return;
     }
-    
-    // Para atas (usa sequencial específico da ata)
+
     if (tipoDoc === 'ata' && orgao && ano && seqAta) {
       const constructedUrl = `https://pncp.gov.br/atas/${orgao}/${ano}/${seqAta}`;
       console.log('URL construída para ata:', constructedUrl);
+      window.open(constructedUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    if (tipoDoc === 'contrato' && orgao && ano && seq) {
+      const constructedUrl = `https://pncp.gov.br/contratos/${orgao}/${ano}/${seq}`;
+      console.log('URL construída para contrato:', constructedUrl);
       window.open(constructedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
@@ -138,6 +139,8 @@ export function LicitacaoTable({
       console.log('Fazendo busca por termo:', searchUrl);
       window.open(searchUrl, '_blank', 'noopener,noreferrer');
     } else {
+      // Exibe os campos analisados quando falhar
+      console.warn('Falha de rotas: campos analisados', { orgao, ano, seq, seqAta, numeroControle });
       console.error('Não foi possível determinar a URL para o documento:', item);
       alert('Não foi possível abrir o documento. Tente novamente ou verifique se o documento ainda está disponível no PNCP.');
     }
