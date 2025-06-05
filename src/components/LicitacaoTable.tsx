@@ -60,8 +60,9 @@ export function LicitacaoTable({
       'recebendo_proposta': 'Recebendo Proposta',
       'em_julgamento': 'Em Julgamento',
       'encerrada': 'Encerrada',
+      'divulgada_no_pncp': 'Divulgada no PNCP',
     };
-    return statusMap[status] || status;
+    return statusMap[status?.toLowerCase()] || status;
   };
 
   const formatCurrency = (value: any) => {
@@ -75,45 +76,60 @@ export function LicitacaoTable({
   };
 
   const openDocument = (item: any) => {
-    console.log('Item clicado:', item);
+    console.log('Item completo:', item);
     
-    // Verifica se há URL direta no item
+    // Primeiro, tenta usar a URL direta se disponível
     if (item.item_url) {
       const fullUrl = `https://pncp.gov.br${item.item_url}`;
-      console.log('Abrindo URL:', fullUrl);
+      console.log('Tentando abrir URL direta:', fullUrl);
       window.open(fullUrl, '_blank', 'noopener,noreferrer');
       return;
     }
     
-    // Constrói URL baseada no numero_controle_pncp
-    if (item.numero_controle_pncp) {
-      let baseUrl = '';
-      
+    // Se não tem item_url, tenta construir baseado nos dados
+    if (item.orgao_cnpj && item.ano && item.numero_sequencial) {
+      // Para editais/avisos de contratação direta
       if (tipoDoc === 'edital') {
-        baseUrl = 'https://pncp.gov.br/app/editais/';
-      } else if (tipoDoc === 'ata') {
-        baseUrl = 'https://pncp.gov.br/app/atas/';
-      } else if (tipoDoc === 'contrato') {
-        baseUrl = 'https://pncp.gov.br/app/contratos/';
+        const constructedUrl = `https://pncp.gov.br/compras/${item.orgao_cnpj}/${item.ano}/${item.numero_sequencial}`;
+        console.log('URL construída para edital:', constructedUrl);
+        window.open(constructedUrl, '_blank', 'noopener,noreferrer');
+        return;
       }
       
-      if (baseUrl) {
-        const fullUrl = `${baseUrl}${item.numero_controle_pncp}`;
-        console.log('Abrindo URL construída:', fullUrl);
-        window.open(fullUrl, '_blank', 'noopener,noreferrer');
+      // Para atas
+      if (tipoDoc === 'ata' && item.numero_sequencial_compra_ata) {
+        const constructedUrl = `https://pncp.gov.br/atas/${item.orgao_cnpj}/${item.ano}/${item.numero_sequencial_compra_ata}`;
+        console.log('URL construída para ata:', constructedUrl);
+        window.open(constructedUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      
+      // Para contratos
+      if (tipoDoc === 'contrato') {
+        const constructedUrl = `https://pncp.gov.br/contratos/${item.orgao_cnpj}/${item.ano}/${item.numero_sequencial}`;
+        console.log('URL construída para contrato:', constructedUrl);
+        window.open(constructedUrl, '_blank', 'noopener,noreferrer');
         return;
       }
     }
     
-    // Fallback: busca geral no PNCP
+    // Se não conseguiu construir URL específica, tenta busca no PNCP
+    if (item.numero_controle_pncp) {
+      const searchUrl = `https://pncp.gov.br/app/busca?q=${encodeURIComponent(item.numero_controle_pncp)}`;
+      console.log('Fazendo busca por número de controle:', searchUrl);
+      window.open(searchUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    
+    // Último recurso: busca pelo título/descrição
     const searchTerm = item.title || item.description || item.objeto || '';
     if (searchTerm) {
       const searchUrl = `https://pncp.gov.br/app/busca?q=${encodeURIComponent(searchTerm)}`;
-      console.log('Abrindo busca:', searchUrl);
+      console.log('Fazendo busca por termo:', searchUrl);
       window.open(searchUrl, '_blank', 'noopener,noreferrer');
     } else {
       console.error('Não foi possível determinar a URL para o documento:', item);
-      alert('Não foi possível abrir o documento. Dados insuficientes.');
+      alert('Não foi possível abrir o documento. Tente novamente ou verifique se o documento ainda está disponível no PNCP.');
     }
   };
 
@@ -214,16 +230,7 @@ export function LicitacaoTable({
                       size="sm"
                       onClick={() => openDocument(item)}
                       className="hover:bg-blue-100 hover:text-blue-700 transition-colors"
-                      title="Visualizar documento no PNCP"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDocument(item)}
-                      className="hover:bg-green-100 hover:text-green-700 transition-colors"
-                      title="Abrir no PNCP"
+                      title="Abrir documento no PNCP"
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
