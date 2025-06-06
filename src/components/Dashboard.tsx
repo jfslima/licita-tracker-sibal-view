@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +5,10 @@ import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, DollarSign, FileText, Target, AlertCircle, Calendar, Award } from 'lucide-react';
 
 export function Dashboard() {
+  const handleVerOportunidades = () => {
+    window.location.hash = 'licitacoes';
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Welcome Section */}
@@ -14,7 +17,11 @@ export function Dashboard() {
           <div>
             <h2 className="text-2xl font-bold mb-2">Bem-vindo de volta! 👋</h2>
             <p className="text-blue-100 mb-4">Você tem 12 novas oportunidades para revisar</p>
-            <Button variant="secondary" className="bg-white text-blue-600 hover:bg-blue-50">
+            <Button 
+              variant="secondary" 
+              className="bg-white text-blue-600 hover:bg-blue-50"
+              onClick={handleVerOportunidades}
+            >
               Ver Oportunidades
             </Button>
           </div>
