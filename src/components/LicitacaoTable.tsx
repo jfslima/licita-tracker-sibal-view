@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -81,6 +80,13 @@ export function LicitacaoTable({
   const openDocument = (item: any) => {
     console.log('Item completo:', item);
     
+    // 👉 1. Caminho exato já enviado pela API?
+    if (item.item_url) {
+      const rel = item.item_url.replace(/^\/app\/?/, ''); // tira /app
+      return navigate(`/pncp/doc/${encodeURIComponent(rel)}`);
+    }
+
+    // 👉 2. fallback antigo (continua valendo p/ dados incompletos)
     const orgao = item.orgao_cnpj ?? item.orgaoCnpj;
     const ano = item.ano ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
     const seq = item.numero_sequencial ?? item.numeroSequencial;

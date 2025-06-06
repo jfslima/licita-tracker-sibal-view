@@ -94,7 +94,10 @@ function App() {
         
         <main>
           <Routes>
-            {/* Rotas do PNCP */}
+            {/* Nova rota coringa para capturar qualquer caminho do PNCP */}
+            <Route path="/pncp/doc/*" element={<DetalhePNCP />} />
+            
+            {/* Rotas do PNCP (mantidas como fallback) */}
             <Route path="/pncp/edital/:orgao/:ano/:seq" element={<DetalhePNCP />} />
             <Route path="/pncp/ata/:orgao/:ano/:seq" element={<DetalhePNCP />} />
             <Route path="/pncp/contrato/:orgao/:ano/:seq" element={<DetalhePNCP />} />

@@ -1,5 +1,5 @@
 
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -11,22 +11,34 @@ import { Badge } from '@/components/ui/badge';
 const apiBase = '/pncp-proxy';
 
 export default function DetalhePNCP() {
-  const { tipo, orgao, ano, seq, numeroControle } = useParams();
+  const { orgao, ano, seq, numeroControle, '*': wildcardPath } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [dados, setDados] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Monta endpoint real do PNCP
     let url = '';
-    if (tipo === 'edital')
-      url = `${apiBase}/compras/${orgao}/${ano}/${seq}`;
-    else if (tipo === 'ata')
-      url = `${apiBase}/atas/${orgao}/${ano}/${seq}`;
-    else if (tipo === 'contrato')
-      url = `${apiBase}/contratos/${orgao}/${ano}/${seq}`;
-    else
-      url = `${apiBase}/contratacoes/${orgao}/${numeroControle}`;
+    
+    // Verifica se é a nova rota coringa /pncp/doc/*
+    if (location.pathname.startsWith('/pncp/doc/')) {
+      const encodedPath = location.pathname.replace('/pncp/doc/', '');
+      const decodedPath = decodeURIComponent(encodedPath);
+      url = `${apiBase}/${decodedPath}`;
+    } else {
+      // Lógica antiga para rotas específicas
+      const pathSegments = location.pathname.split('/');
+      const tipo = pathSegments[2]; // edital, ata, contrato, contratacao
+      
+      if (tipo === 'edital')
+        url = `${apiBase}/compras/${orgao}/${ano}/${seq}`;
+      else if (tipo === 'ata')
+        url = `${apiBase}/atas/${orgao}/${ano}/${seq}`;
+      else if (tipo === 'contrato')
+        url = `${apiBase}/contratos/${orgao}/${ano}/${seq}`;
+      else if (tipo === 'contratacao')
+        url = `${apiBase}/contratacoes/${orgao}/${numeroControle}`;
+    }
 
     console.log('Buscando dados em:', url);
 
@@ -43,7 +55,7 @@ export default function DetalhePNCP() {
         setDados(null);
       })
       .finally(() => setLoading(false));
-  }, [tipo, orgao, ano, seq, numeroControle]);
+  }, [location.pathname, orgao, ano, seq, numeroControle]);
 
   const formatCurrency = (value: any) => {
     if (!value || value === '-') return '-';
@@ -252,7 +264,7 @@ export default function DetalhePNCP() {
               asChild
             >
               <a
-                href={`https://pncp.gov.br/app/${tipo === 'edital' ? 'editais' : tipo}/${orgao}/${ano}/${seq || numeroControle}`}
+                href={`https://pncp.gov.br${location.pathname.replace('/pncp/doc/', '/app/')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2"
