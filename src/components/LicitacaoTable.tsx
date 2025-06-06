@@ -75,16 +75,31 @@ export function LicitacaoTable({
     }).format(numValue);
   };
 
+  // Helper que remove qualquer prefixo /app ou /app/#/
+  const normalize = (path: string) => {
+    // garante barra inicial
+    let p = path.startsWith('/') ? path : '/' + path;
+
+    // /app/#/algo  → /algo
+    if (p.startsWith('/app/#/')) p = p.slice(6);      // remove "/app/#"
+    // /app/algo    → /algo
+    else if (p.startsWith('/app/')) p = p.slice(4);   // remove "/app"
+
+    return p;
+  };
+
   const openDocument = (item: any) => {
     console.log('Item completo:', item);
     
     const base = 'https://pncp.gov.br';
     
-    // 1) item_url vindo da API - já vem correto
-    const directUrl = item.item_url ?? item.itemUrl;
-    if (directUrl) {
-      console.log('Tentando abrir URL direta:', directUrl);
-      window.open(`${base}${directUrl}`, '_blank', 'noopener,noreferrer');
+    // 1) item_url vindo da API - normalizar antes de usar
+    const raw = item.item_url ?? item.itemUrl;
+    if (raw) {
+      console.log('URL bruta da API:', raw);
+      const normalizedUrl = `${base}${normalize(raw)}`;
+      console.log('URL normalizada:', normalizedUrl);
+      window.open(normalizedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
     
@@ -116,23 +131,23 @@ export function LicitacaoTable({
     
     console.log('Dados extraídos:', { orgao, ano, seq, seqAta, numeroControle, tipoDoc });
     
-    // 2) URLs construídas - diretas (sem /app/#/)
+    // 2) URLs construídas - usar normalize para garantir formato limpo
     if (tipoDoc === 'edital' && orgao && ano && seq) {
-      const constructedUrl = `${base}/compras/${orgao}/${ano}/${seq}`;
+      const constructedUrl = `${base}${normalize(`/compras/${orgao}/${ano}/${seq}`)}`;
       console.log('URL construída para edital:', constructedUrl);
       window.open(constructedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
 
     if (tipoDoc === 'ata' && orgao && ano && seqAta) {
-      const constructedUrl = `${base}/atas/${orgao}/${ano}/${seqAta}`;
+      const constructedUrl = `${base}${normalize(`/atas/${orgao}/${ano}/${seqAta}`)}`;
       console.log('URL construída para ata:', constructedUrl);
       window.open(constructedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
 
     if (tipoDoc === 'contrato' && orgao && ano && seq) {
-      const constructedUrl = `${base}/contratos/${orgao}/${ano}/${seq}`;
+      const constructedUrl = `${base}${normalize(`/contratos/${orgao}/${ano}/${seq}`)}`;
       console.log('URL construída para contrato:', constructedUrl);
       window.open(constructedUrl, '_blank', 'noopener,noreferrer');
       return;
