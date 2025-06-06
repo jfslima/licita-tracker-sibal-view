@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Table,
@@ -76,21 +75,16 @@ export function LicitacaoTable({
     }).format(numValue);
   };
 
-  // Helper único para gerar URLs corretas do PNCP
-  const buildUrl = (path: string) => {
-    // garante "sem barra" e sem duplicar "app/"
-    const clean = path.replace(/^\/?app\/?/, '').replace(/^\/+/, '');
-    return `https://pncp.gov.br/app/#/${clean}`;
-  };
-
   const openDocument = (item: any) => {
     console.log('Item completo:', item);
     
-    // 1) item_url vindo da API
+    const base = 'https://pncp.gov.br';
+    
+    // 1) item_url vindo da API - já vem correto
     const directUrl = item.item_url ?? item.itemUrl;
     if (directUrl) {
-      console.log('Tentando abrir URL direta via buildUrl:', directUrl);
-      window.open(buildUrl(directUrl), '_blank', 'noopener,noreferrer');
+      console.log('Tentando abrir URL direta:', directUrl);
+      window.open(`${base}${directUrl}`, '_blank', 'noopener,noreferrer');
       return;
     }
     
@@ -122,39 +116,39 @@ export function LicitacaoTable({
     
     console.log('Dados extraídos:', { orgao, ano, seq, seqAta, numeroControle, tipoDoc });
     
-    // 2) URLs construídas
+    // 2) URLs construídas - diretas (sem /app/#/)
     if (tipoDoc === 'edital' && orgao && ano && seq) {
-      const constructedUrl = buildUrl(`compras/${orgao}/${ano}/${seq}`);
-      console.log('URL construída para edital via buildUrl:', constructedUrl);
+      const constructedUrl = `${base}/compras/${orgao}/${ano}/${seq}`;
+      console.log('URL construída para edital:', constructedUrl);
       window.open(constructedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
 
     if (tipoDoc === 'ata' && orgao && ano && seqAta) {
-      const constructedUrl = buildUrl(`atas/${orgao}/${ano}/${seqAta}`);
-      console.log('URL construída para ata via buildUrl:', constructedUrl);
+      const constructedUrl = `${base}/atas/${orgao}/${ano}/${seqAta}`;
+      console.log('URL construída para ata:', constructedUrl);
       window.open(constructedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
 
     if (tipoDoc === 'contrato' && orgao && ano && seq) {
-      const constructedUrl = buildUrl(`contratos/${orgao}/${ano}/${seq}`);
-      console.log('URL construída para contrato via buildUrl:', constructedUrl);
+      const constructedUrl = `${base}/contratos/${orgao}/${ano}/${seq}`;
+      console.log('URL construída para contrato:', constructedUrl);
       window.open(constructedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
 
-    // 3) fallback hash (contratações)
+    // 3) somente CONTRATACOES continua no hash router
     if (orgao && numeroControle) {
-      const hashUrl = buildUrl(`contratacoes/${orgao}/${numeroControle}`);
-      console.log('Tentando URL de contratações via buildUrl:', hashUrl);
+      const hashUrl = `${base}/app/#/contratacoes/${orgao}/${numeroControle}`;
+      console.log('Tentando URL de contratações com hash:', hashUrl);
       window.open(hashUrl, '_blank', 'noopener,noreferrer');
       return;
     }
     
     // Se não conseguiu construir URL específica, tenta busca no PNCP
     if (numeroControle) {
-      const searchUrl = `https://pncp.gov.br/app/busca?q=${encodeURIComponent(numeroControle)}`;
+      const searchUrl = `${base}/app/busca?q=${encodeURIComponent(numeroControle)}`;
       console.log('Fazendo busca por número de controle:', searchUrl);
       window.open(searchUrl, '_blank', 'noopener,noreferrer');
       return;
@@ -163,7 +157,7 @@ export function LicitacaoTable({
     // Último recurso: busca pelo título/descrição
     const searchTerm = item.title || item.description || item.objeto || '';
     if (searchTerm) {
-      const searchUrl = `https://pncp.gov.br/app/busca?q=${encodeURIComponent(searchTerm)}`;
+      const searchUrl = `${base}/app/busca?q=${encodeURIComponent(searchTerm)}`;
       console.log('Fazendo busca por termo:', searchUrl);
       window.open(searchUrl, '_blank', 'noopener,noreferrer');
     } else {
