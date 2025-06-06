@@ -5,13 +5,28 @@ import { Badge } from '@/components/ui/badge';
 import { Bell, Search, User, Menu, TrendingUp, FileText, Award } from 'lucide-react';
 
 export function Header() {
+  const handleNavigation = (section: string) => {
+    // Remove hash atual e adiciona o novo
+    window.location.hash = section;
+    
+    // Se estivermos na home, rola para a seção
+    if (section !== '' && !section.startsWith('dashboard') && !section.startsWith('licitacoes') && !section.startsWith('precos')) {
+      setTimeout(() => {
+        const element = document.getElementById(section);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo e Branding */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleNavigation('')}>
               <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
                 <TrendingUp className="h-6 w-6 text-white" />
               </div>
@@ -29,19 +44,39 @@ export function Header() {
 
           {/* Navegação Central */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#dashboard" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            <a 
+              href="#dashboard" 
+              onClick={(e) => { e.preventDefault(); handleNavigation('dashboard'); }}
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors cursor-pointer"
+            >
               Dashboard
             </a>
-            <a href="#licitacoes" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            <a 
+              href="#licitacoes" 
+              onClick={(e) => { e.preventDefault(); handleNavigation('licitacoes'); }}
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors cursor-pointer"
+            >
               Licitações
             </a>
-            <a href="#alertas" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            <a 
+              href="#alertas" 
+              onClick={(e) => { e.preventDefault(); handleNavigation('alertas'); }}
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors cursor-pointer"
+            >
               Alertas
             </a>
-            <a href="#relatorios" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            <a 
+              href="#relatorios" 
+              onClick={(e) => { e.preventDefault(); handleNavigation('relatorios'); }}
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors cursor-pointer"
+            >
               Relatórios
             </a>
-            <a href="#precos" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+            <a 
+              href="#precos" 
+              onClick={(e) => { e.preventDefault(); handleNavigation('precos'); }}
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors cursor-pointer"
+            >
               Preços
             </a>
           </nav>
