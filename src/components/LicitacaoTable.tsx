@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -34,6 +36,7 @@ export function LicitacaoTable({
   onPageChange,
   onPageSizeChange,
 }: LicitacaoTableProps) {
+  const navigate = useNavigate();
   const totalPages = Math.ceil(rowCount / pageSize);
   const startItem = page * pageSize + 1;
   const endItem = Math.min((page + 1) * pageSize, rowCount);
@@ -75,73 +78,33 @@ export function LicitacaoTable({
     }).format(numValue);
   };
 
-  const base = 'https://pncp.gov.br';
-
-  /** Normaliza qualquer item_url do PNCP   */
-  function normalizePath(raw: string) {
-    if (!raw) return '';
-
-    // alguns vêm com barra dupla ou com /app já incluso
-    let path = raw.replace(/^\/+/, '');
-
-    // Editais/Avisos chegam com `/compras/`
-    if (path.startsWith('compras/')) {
-      path = path.replace(/^compras/, 'editais');
-    }
-
-    // Garante prefixo /app/ e remove hash antigo se existir
-    path = `app/${path}`.replace(/app\/app\//, 'app/').replace(/app\/#\//, 'app/');
-
-    // devolve com barra inicial
-    return `/${path}`;
-  }
-
   const openDocument = (item: any) => {
     console.log('Item completo:', item);
     
-    const direct = item.item_url ?? item.itemUrl;
-    if (direct) {
-      console.log('URL bruta da API:', direct);
-      const normalizedUrl = `${base}${normalizePath(direct)}`;
-      console.log('URL normalizada:', normalizedUrl);
-      window.open(normalizedUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
-
-    /* -------------------------------------------------------
-       Abaixo só fica o cálculo "manual" para quando o PNCP
-       não mandar o item_url (caso raro). Mantém suas regras. 
-    --------------------------------------------------------*/
-    const orgao  = item.orgao_cnpj ?? item.orgaoCnpj;
-    const ano    = item.ano ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
-    const seq    = item.numero_sequencial ?? item.numeroSequencial;
+    const orgao = item.orgao_cnpj ?? item.orgaoCnpj;
+    const ano = item.ano ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
+    const seq = item.numero_sequencial ?? item.numeroSequencial;
     const seqAta = item.numero_sequencial_compra_ata ?? item.numeroSequencialCompraAta;
-    const ctrl   = item.numero_controle_pncp  ?? item.numeroControlePncp;
+    const numCtrl = item.numero_controle_pncp ?? item.numeroControlePncp;
 
-    let path = '';
-    switch (tipoDoc) {
-      case 'edital':
-        if (orgao && ano && seq) path = `/app/editais/${orgao}/${ano}/${seq}`;
-        break;
-      case 'ata':
-        if (orgao && ano && seqAta) path = `/app/atas/${orgao}/${ano}/${seqAta}`;
-        break;
-      case 'contrato':
-        if (orgao && ano && seq) path = `/app/contratos/${orgao}/${ano}/${seq}`;
-        break;
+    if (tipoDoc === 'edital' && orgao && ano && seq) {
+      return navigate(`/pncp/edital/${orgao}/${ano}/${seq}`);
     }
 
-    if (path) {
-      console.log('URL construída manualmente:', `${base}${path}`);
-      window.open(`${base}${path}`, '_blank', 'noopener,noreferrer');
-    } else if (ctrl) {
-      const searchUrl = `${base}/app/busca?q=${encodeURIComponent(ctrl)}`;
-      console.log('Fazendo busca por número de controle:', searchUrl);
-      window.open(searchUrl, '_blank');
-    } else {
-      console.error('Não foi possível determinar a URL para o documento:', item);
-      alert('Não foi possível abrir este documento no PNCP.');
+    if (tipoDoc === 'ata' && orgao && ano && seqAta) {
+      return navigate(`/pncp/ata/${orgao}/${ano}/${seqAta}`);
     }
+
+    if (tipoDoc === 'contrato' && orgao && ano && seq) {
+      return navigate(`/pncp/contrato/${orgao}/${ano}/${seq}`);
+    }
+
+    if (numCtrl) {
+      return navigate(`/pncp/contratacao/${orgao}/${numCtrl}`);
+    }
+
+    console.error('Não foi possível determinar a rota para o documento:', item);
+    alert('Não foi possível abrir este documento.');
   };
 
   if (loading) {
@@ -241,9 +204,9 @@ export function LicitacaoTable({
                       size="sm"
                       onClick={() => openDocument(item)}
                       className="hover:bg-blue-100 hover:text-blue-700 transition-colors"
-                      title="Abrir documento no PNCP"
+                      title="Ver detalhes do documento"
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <Eye className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>

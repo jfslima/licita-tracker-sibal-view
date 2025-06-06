@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { Dashboard } from '@/components/Dashboard';
@@ -7,6 +8,7 @@ import { LicitacaoSystem } from '@/components/LicitacaoSystem';
 import { PricingSection } from '@/components/PricingSection';
 import { Footer } from '@/components/Footer';
 import { Toaster } from '@/components/ui/toaster';
+import DetalhePNCP from '@/pages/DetalhePNCP';
 import './App.css';
 
 function App() {
@@ -86,16 +88,27 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      
-      <main>
-        {renderContent()}
-      </main>
-      
-      <Footer />
-      <Toaster />
-    </div>
+    <Router>
+      <div className="min-h-screen bg-white">
+        <Header />
+        
+        <main>
+          <Routes>
+            {/* Rotas do PNCP */}
+            <Route path="/pncp/edital/:orgao/:ano/:seq" element={<DetalhePNCP />} />
+            <Route path="/pncp/ata/:orgao/:ano/:seq" element={<DetalhePNCP />} />
+            <Route path="/pncp/contrato/:orgao/:ano/:seq" element={<DetalhePNCP />} />
+            <Route path="/pncp/contratacao/:orgao/:numeroControle" element={<DetalhePNCP />} />
+            
+            {/* Rota padrão */}
+            <Route path="*" element={renderContent()} />
+          </Routes>
+        </main>
+        
+        <Footer />
+        <Toaster />
+      </div>
+    </Router>
   );
 }
 
