@@ -89,17 +89,31 @@ export function LicitacaoTable({
     
     // Captura todas as variações de campos que o PNCP pode usar
     const orgao = item.orgao_cnpj ?? item.orgaoCnpj ?? item.cnpjOrgaoGerenciador;
-    const ano = item.ano ?? item.anoPublicacao ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
-    const seq = item.numero_sequencial
-             ?? item.numeroSequencial
-             ?? item.numeroEdital                // para editais
-             ?? item.numeroContratoApostilamento; // para contratos/ARP
 
-    const seqAta = item.numero_sequencial_compra_ata
-                ?? item.numeroSequencialCompraAta
-                ?? item.numeroControleAta;         // para atas
+    // --- ano -----------------------------------------------------------------
+    let ano =
+      item.ano ??
+      item.anoPublicacao ??
+      (item.data_publicacao_pncp
+        ? new Date(item.data_publicacao_pncp).getFullYear()
+        : undefined);
+    if (!ano || Number.isNaN(ano) || ano < 1900) ano = ''; // força vazio em caso de erro
+
+    // --- sequenciais ---------------------------------------------------------
+    const val = (v: any) => (v && v !== '0' ? v : '');      // tira zero/vazio
+
+    const seq    = val(item.numero_sequencial)
+                || val(item.numeroSequencial)
+                || val(item.numeroEdital)
+                || val(item.numeroContratoApostilamento);
+
+    const seqAta = val(item.numero_sequencial_compra_ata)
+                || val(item.numeroSequencialCompraAta)
+                || val(item.numeroControleAta);
     
-    console.log('Dados extraídos:', { orgao, ano, seq, seqAta, tipoDoc });
+    const numeroControle = item.numero_controle_pncp ?? item.numeroControlePncp;
+    
+    console.log('Dados extraídos:', { orgao, ano, seq, seqAta, numeroControle, tipoDoc });
     
     // Tenta construir URLs específicas baseado no tipo de documento
     if (tipoDoc === 'edital' && orgao && ano && seq) {
@@ -122,9 +136,16 @@ export function LicitacaoTable({
       window.open(constructedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
+
+    // fallback para rotas "hash" que o PNCP usa em alguns editais/atas
+    if (orgao && numeroControle) {
+      const hashUrl = `https://pncp.gov.br/#/contratacoes/${orgao}/${numeroControle}`;
+      console.log('Tentando URL com hash:', hashUrl);
+      window.open(hashUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
     
     // Se não conseguiu construir URL específica, tenta busca no PNCP
-    const numeroControle = item.numero_controle_pncp ?? item.numeroControlePncp;
     if (numeroControle) {
       const searchUrl = `https://pncp.gov.br/app/busca?q=${encodeURIComponent(numeroControle)}`;
       console.log('Fazendo busca por número de controle:', searchUrl);
