@@ -75,111 +75,72 @@ export function LicitacaoTable({
     }).format(numValue);
   };
 
-  // Helper que remove qualquer prefixo /app ou /app/#/
-  const normalize = (path: string) => {
-    // garante barra inicial
-    let p = path.startsWith('/') ? path : '/' + path;
+  const base = 'https://pncp.gov.br';
 
-    // /app/#/algo  → /algo
-    if (p.startsWith('/app/#/')) p = p.slice(6);      // remove "/app/#"
-    // /app/algo    → /algo
-    else if (p.startsWith('/app/')) p = p.slice(4);   // remove "/app"
+  /** Normaliza qualquer item_url do PNCP   */
+  function normalizePath(raw: string) {
+    if (!raw) return '';
 
-    return p;
-  };
+    // alguns vêm com barra dupla ou com /app já incluso
+    let path = raw.replace(/^\/+/, '');
+
+    // Editais/Avisos chegam com `/compras/`
+    if (path.startsWith('compras/')) {
+      path = path.replace(/^compras/, 'editais');
+    }
+
+    // Garante prefixo /app/ e remove hash antigo se existir
+    path = `app/${path}`.replace(/app\/app\//, 'app/').replace(/app\/#\//, 'app/');
+
+    // devolve com barra inicial
+    return `/${path}`;
+  }
 
   const openDocument = (item: any) => {
     console.log('Item completo:', item);
     
-    const base = 'https://pncp.gov.br';
-    
-    // 1) item_url vindo da API - normalizar antes de usar
-    const raw = item.item_url ?? item.itemUrl;
-    if (raw) {
-      console.log('URL bruta da API:', raw);
-      const normalizedUrl = `${base}${normalize(raw)}`;
+    const direct = item.item_url ?? item.itemUrl;
+    if (direct) {
+      console.log('URL bruta da API:', direct);
+      const normalizedUrl = `${base}${normalizePath(direct)}`;
       console.log('URL normalizada:', normalizedUrl);
       window.open(normalizedUrl, '_blank', 'noopener,noreferrer');
       return;
     }
-    
-    // Captura todas as variações de campos que o PNCP pode usar
-    const orgao = item.orgao_cnpj ?? item.orgaoCnpj ?? item.cnpjOrgaoGerenciador;
 
-    // --- ano -----------------------------------------------------------------
-    let ano =
-      item.ano ??
-      item.anoPublicacao ??
-      (item.data_publicacao_pncp
-        ? new Date(item.data_publicacao_pncp).getFullYear()
-        : undefined);
-    if (!ano || Number.isNaN(ano) || ano < 1900) ano = ''; // força vazio em caso de erro
+    /* -------------------------------------------------------
+       Abaixo só fica o cálculo "manual" para quando o PNCP
+       não mandar o item_url (caso raro). Mantém suas regras. 
+    --------------------------------------------------------*/
+    const orgao  = item.orgao_cnpj ?? item.orgaoCnpj;
+    const ano    = item.ano ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
+    const seq    = item.numero_sequencial ?? item.numeroSequencial;
+    const seqAta = item.numero_sequencial_compra_ata ?? item.numeroSequencialCompraAta;
+    const ctrl   = item.numero_controle_pncp  ?? item.numeroControlePncp;
 
-    // --- sequenciais ---------------------------------------------------------
-    const val = (v: any) => (v && v !== '0' ? v : '');      // tira zero/vazio
-
-    const seq    = val(item.numero_sequencial)
-                || val(item.numeroSequencial)
-                || val(item.numeroEdital)
-                || val(item.numeroContratoApostilamento);
-
-    const seqAta = val(item.numero_sequencial_compra_ata)
-                || val(item.numeroSequencialCompraAta)
-                || val(item.numeroControleAta);
-    
-    const numeroControle = item.numero_controle_pncp ?? item.numeroControlePncp;
-    
-    console.log('Dados extraídos:', { orgao, ano, seq, seqAta, numeroControle, tipoDoc });
-    
-    // 2) URLs construídas - usar normalize para garantir formato limpo
-    if (tipoDoc === 'edital' && orgao && ano && seq) {
-      const constructedUrl = `${base}${normalize(`/compras/${orgao}/${ano}/${seq}`)}`;
-      console.log('URL construída para edital:', constructedUrl);
-      window.open(constructedUrl, '_blank', 'noopener,noreferrer');
-      return;
+    let path = '';
+    switch (tipoDoc) {
+      case 'edital':
+        if (orgao && ano && seq) path = `/app/editais/${orgao}/${ano}/${seq}`;
+        break;
+      case 'ata':
+        if (orgao && ano && seqAta) path = `/app/atas/${orgao}/${ano}/${seqAta}`;
+        break;
+      case 'contrato':
+        if (orgao && ano && seq) path = `/app/contratos/${orgao}/${ano}/${seq}`;
+        break;
     }
 
-    if (tipoDoc === 'ata' && orgao && ano && seqAta) {
-      const constructedUrl = `${base}${normalize(`/atas/${orgao}/${ano}/${seqAta}`)}`;
-      console.log('URL construída para ata:', constructedUrl);
-      window.open(constructedUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
-
-    if (tipoDoc === 'contrato' && orgao && ano && seq) {
-      const constructedUrl = `${base}${normalize(`/contratos/${orgao}/${ano}/${seq}`)}`;
-      console.log('URL construída para contrato:', constructedUrl);
-      window.open(constructedUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
-
-    // 3) somente CONTRATACOES continua no hash router
-    if (orgao && numeroControle) {
-      const hashUrl = `${base}/app/#/contratacoes/${orgao}/${numeroControle}`;
-      console.log('Tentando URL de contratações com hash:', hashUrl);
-      window.open(hashUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
-    
-    // Se não conseguiu construir URL específica, tenta busca no PNCP
-    if (numeroControle) {
-      const searchUrl = `${base}/app/busca?q=${encodeURIComponent(numeroControle)}`;
+    if (path) {
+      console.log('URL construída manualmente:', `${base}${path}`);
+      window.open(`${base}${path}`, '_blank', 'noopener,noreferrer');
+    } else if (ctrl) {
+      const searchUrl = `${base}/app/busca?q=${encodeURIComponent(ctrl)}`;
       console.log('Fazendo busca por número de controle:', searchUrl);
-      window.open(searchUrl, '_blank', 'noopener,noreferrer');
-      return;
-    }
-    
-    // Último recurso: busca pelo título/descrição
-    const searchTerm = item.title || item.description || item.objeto || '';
-    if (searchTerm) {
-      const searchUrl = `${base}/app/busca?q=${encodeURIComponent(searchTerm)}`;
-      console.log('Fazendo busca por termo:', searchUrl);
-      window.open(searchUrl, '_blank', 'noopener,noreferrer');
+      window.open(searchUrl, '_blank');
     } else {
-      // Exibe os campos analisados quando falhar
-      console.warn('Falha de rotas: campos analisados', { orgao, ano, seq, seqAta, numeroControle });
       console.error('Não foi possível determinar a URL para o documento:', item);
-      alert('Não foi possível abrir o documento. Tente novamente ou verifique se o documento ainda está disponível no PNCP.');
+      alert('Não foi possível abrir este documento no PNCP.');
     }
   };
 
