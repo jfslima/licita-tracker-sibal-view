@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Send, Bot, User, Loader2, X, FileText, Sparkles, 
   Brain, BookOpen, AlertCircle, TrendingUp, Target,
-  Download, Share2, Bookmark, History, Settings
+  Download, Share2, Bookmark, History, Settings, Paperclip, File
 } from 'lucide-react';
 import { useAdvancedGroqAI } from '@/hooks/useAdvancedGroqAI';
 
@@ -58,9 +58,9 @@ const aiModes = [
 ];
 
 const quickActions = [
-  { id: 'summarize', label: 'Resumir Documento', icon: Sparkles },
-  { id: 'analyze', label: 'Análise Jurídica', icon: AlertCircle },
-  { id: 'risks', label: 'Identificar Riscos', icon: TrendingUp },
+  { id: 'summarize', label: 'Resumir', icon: Sparkles },
+  { id: 'analyze', label: 'Analisar', icon: AlertCircle },
+  { id: 'risks', label: 'Riscos', icon: TrendingUp },
   { id: 'timeline', label: 'Cronograma', icon: History },
 ];
 
@@ -68,9 +68,11 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
   const [inputMessage, setInputMessage] = useState('');
   const [selectedMode, setSelectedMode] = useState('consultant');
   const [isExpanded, setIsExpanded] = useState(true);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const { messages, isLoading, isStreaming, sendMessage, analyzeDocument, clearMessages, exportConversation } = useAdvancedGroqAI();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -79,27 +81,45 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    if ((!inputMessage.trim() && attachedFiles.length === 0) || isLoading) return;
 
-    const message = inputMessage;
-    setInputMessage('');
-    
-    const currentMode = aiModes.find(m => m.id === selectedMode);
-    const context = documentContext ? 
+    let message = inputMessage;
+    let context = documentContext ? 
       `Documento: ${documentContext.title}\nTipo: ${documentContext.type}\nConteúdo: ${documentContext.text}` : 
       undefined;
 
+    // Processar arquivos anexados
+    if (attachedFiles.length > 0) {
+      const fileContents = await Promise.all(
+        attachedFiles.map(async (file) => {
+          const text = await file.text();
+          return `Arquivo: ${file.name}\nConteúdo: ${text}`;
+        })
+      );
+      
+      const filesContext = fileContents.join('\n\n');
+      context = context ? `${context}\n\n${filesContext}` : filesContext;
+      
+      if (!message.trim()) {
+        message = 'Por favor, analise e resuma os documentos anexados.';
+      }
+    }
+
+    setInputMessage('');
+    setAttachedFiles([]);
+    
+    const currentMode = aiModes.find(m => m.id === selectedMode);
     await sendMessage(message, context, selectedMode);
   };
 
   const handleQuickAction = async (actionId: string) => {
-    if (!documentContext) return;
+    if (!documentContext && attachedFiles.length === 0) return;
     
     const actions = {
-      summarize: `Faça um resumo executivo do documento "${documentContext.title}" destacando pontos principais, valores, prazos e requisitos.`,
-      analyze: `Realize uma análise jurídica detalhada do documento "${documentContext.title}", identificando cláusulas importantes e aspectos legais relevantes.`,
-      risks: `Identifique os principais riscos e pontos de atenção no documento "${documentContext.title}" para empresas interessadas em participar.`,
-      timeline: `Crie um cronograma detalhado com todas as datas e prazos importantes mencionados no documento "${documentContext.title}".`
+      summarize: `Faça um resumo executivo detalhado destacando pontos principais, valores, prazos e requisitos essenciais.`,
+      analyze: `Realize uma análise jurídica completa identificando cláusulas importantes, aspectos legais relevantes e pontos de atenção.`,
+      risks: `Identifique os principais riscos, pontos de atenção e possíveis obstáculos para empresas interessadas em participar.`,
+      timeline: `Crie um cronograma detalhado com todas as datas, prazos importantes e marcos do processo.`
     };
     
     const actionMessage = actions[actionId as keyof typeof actions];
@@ -114,6 +134,26 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter(file => 
+      file.type === 'text/plain' || 
+      file.type === 'application/pdf' || 
+      file.name.endsWith('.txt') ||
+      file.name.endsWith('.md')
+    );
+    
+    setAttachedFiles(prev => [...prev, ...validFiles]);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const currentMode = aiModes.find(m => m.id === selectedMode);
@@ -191,16 +231,25 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
               </Select>
             </div>
 
-            {documentContext && (
+            {(documentContext || attachedFiles.length > 0) && (
               <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-white/80" />
                     <div>
-                      <Badge variant="secondary" className="mb-1 bg-white/20 text-white border-white/30 text-xs">
-                        {documentContext.type.toUpperCase()}
-                      </Badge>
-                      <p className="text-sm font-medium text-white">{documentContext.title}</p>
+                      {documentContext && (
+                        <>
+                          <Badge variant="secondary" className="mb-1 bg-white/20 text-white border-white/30 text-xs">
+                            {documentContext.type.toUpperCase()}
+                          </Badge>
+                          <p className="text-sm font-medium text-white">{documentContext.title}</p>
+                        </>
+                      )}
+                      {attachedFiles.length > 0 && (
+                        <p className="text-sm font-medium text-white">
+                          {attachedFiles.length} arquivo(s) anexado(s)
+                        </p>
+                      )}
                     </div>
                   </div>
                   
@@ -255,7 +304,6 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
                       variant="outline"
                       onClick={() => {
                         setInputMessage(item.q);
-                        handleSendMessage();
                       }}
                       disabled={isLoading}
                       className="h-auto p-4 text-left justify-start border-2 hover:border-blue-300 transition-all"
@@ -332,21 +380,56 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
           <Separator />
           
           <div className="p-6 bg-gradient-to-r from-gray-50 to-blue-50">
+            {/* Arquivos anexados */}
+            {attachedFiles.length > 0 && (
+              <div className="mb-4">
+                <div className="flex flex-wrap gap-2">
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm">
+                      <File className="h-3 w-3" />
+                      <span className="truncate max-w-32">{file.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        className="h-4 w-4 p-0 hover:bg-blue-200"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 mb-3">
-              <Textarea
-                ref={inputRef}
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={`Digite sua pergunta para o ${currentMode?.name}...`}
-                disabled={isLoading}
-                className="flex-1 min-h-[60px] max-h-[120px] resize-none border-2 border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl"
-                rows={2}
-              />
+              <div className="flex-1 relative">
+                <Textarea
+                  ref={inputRef}
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  placeholder={`Digite sua pergunta para o ${currentMode?.name}...`}
+                  disabled={isLoading}
+                  className="flex-1 min-h-[60px] max-h-[120px] resize-none border-2 border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl pr-12"
+                  rows={2}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="absolute right-2 top-2 h-8 w-8 p-0 hover:bg-gray-100"
+                  title="Anexar arquivo"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
+              </div>
+              
               <div className="flex flex-col gap-2">
                 <Button 
                   onClick={handleSendMessage} 
-                  disabled={isLoading || !inputMessage.trim()}
+                  disabled={isLoading || (!inputMessage.trim() && attachedFiles.length === 0)}
                   className={`bg-gradient-to-r ${currentMode?.color} hover:opacity-90 text-white px-6 py-3 h-auto rounded-xl shadow-lg transition-all duration-200`}
                 >
                   {isLoading ? (
@@ -355,19 +438,27 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
                     <Send className="h-5 w-5" />
                   )}
                 </Button>
-                {documentContext && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickAction('summarize')}
-                    disabled={isLoading}
-                    className="px-3 py-2 h-auto"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickAction('summarize')}
+                  disabled={isLoading || (!documentContext && attachedFiles.length === 0)}
+                  className="px-3 py-2 h-auto"
+                  title="Resumir documentos"
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
               </div>
             </div>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".txt,.md,.pdf,text/plain"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
             
             {messages.length > 0 && (
               <div className="flex justify-between items-center">
