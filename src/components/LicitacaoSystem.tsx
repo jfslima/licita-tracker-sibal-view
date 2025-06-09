@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,8 @@ import { Separator } from '@/components/ui/separator';
 import { Search, FileText, FileCheck, Loader2, Filter } from 'lucide-react';
 import { LicitacaoTable } from './LicitacaoTable';
 import { FilterPanel } from './FilterPanel';
+import { AIChat } from './AIChat';
+import { AIButton } from './AIButton';
 import { useToast } from '@/hooks/use-toast';
 
 // Tipos de documento disponíveis
@@ -58,6 +59,8 @@ export function LicitacaoSystem() {
   const [loading, setLoading] = useState(false);
   const [loadingFilters, setLoadingFilters] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [aiDocumentContext, setAiDocumentContext] = useState<any>(null);
   
   const { toast } = useToast();
 
@@ -199,6 +202,24 @@ export function LicitacaoSystem() {
     }
   }, [page, pageSize]);
 
+  const openAIWithDocument = (document: any) => {
+    setAiDocumentContext({
+      text: `Objeto: ${document.description || document.objeto || 'N/A'}
+Órgão: ${document.orgao_nome || document.orgao || 'N/A'}
+Valor: ${document.valor_global || document.valor || 'N/A'}
+Status: ${document.situacao_nome || document.status || 'N/A'}
+Data: ${document.data_publicacao_pncp || document.dataPublicacao || 'N/A'}`,
+      type: tipoDoc,
+      title: document.description || document.objeto || 'Documento de Licitação'
+    });
+    setShowAIChat(true);
+  };
+
+  const openGeneralAI = () => {
+    setAiDocumentContext(null);
+    setShowAIChat(true);
+  };
+
   const currentTypeIcon = tiposDocumento.find(t => t.value === tipoDoc)?.icon || FileText;
   const IconComponent = currentTypeIcon;
 
@@ -208,14 +229,22 @@ export function LicitacaoSystem() {
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 p-8 text-white shadow-2xl">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-              <Search className="h-8 w-8" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
+                <Search className="h-8 w-8" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold">Sistema de Licitações</h1>
+                <p className="text-blue-100 text-lg">Portal Nacional de Contratações Públicas (PNCP)</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold">Sistema de Licitações</h1>
-              <p className="text-blue-100 text-lg">Portal Nacional de Contratações Públicas (PNCP)</p>
-            </div>
+            <AIButton 
+              onClick={openGeneralAI}
+              variant="default"
+              size="lg"
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            />
           </div>
         </div>
       </div>
@@ -347,9 +376,15 @@ export function LicitacaoSystem() {
           <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-t-lg">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl">Resultados da Consulta</CardTitle>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1 text-sm font-medium">
-                {rowCount} registros encontrados
-              </Badge>
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1 text-sm font-medium">
+                  {rowCount} registros encontrados
+                </Badge>
+                <AIButton 
+                  onClick={openGeneralAI}
+                  variant="default"
+                />
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -362,10 +397,18 @@ export function LicitacaoSystem() {
               rowCount={rowCount}
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
+              onAskAI={openAIWithDocument}
             />
           </CardContent>
         </Card>
       )}
+
+      {/* AI Chat Modal */}
+      <AIChat
+        isOpen={showAIChat}
+        onClose={() => setShowAIChat(false)}
+        documentContext={aiDocumentContext}
+      />
     </div>
   );
 }

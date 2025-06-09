@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, FileText, ExternalLink, Eye, Download } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AIButton } from './AIButton';
 
 interface LicitacaoTableProps {
   data: any[];
@@ -22,6 +23,7 @@ interface LicitacaoTableProps {
   rowCount: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  onAskAI?: (item: any) => void;
 }
 
 export function LicitacaoTable({
@@ -33,6 +35,7 @@ export function LicitacaoTable({
   rowCount,
   onPageChange,
   onPageSizeChange,
+  onAskAI,
 }: LicitacaoTableProps) {
   const totalPages = Math.ceil(rowCount / pageSize);
   const startItem = page * pageSize + 1;
@@ -245,6 +248,12 @@ export function LicitacaoTable({
                     >
                       <ExternalLink className="h-4 w-4" />
                     </Button>
+                    {onAskAI && (
+                      <AIButton
+                        variant="icon"
+                        onClick={() => onAskAI(item)}
+                      />
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
