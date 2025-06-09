@@ -22,7 +22,7 @@ const modeConfig = {
 
 export function AIEnhancedButton({ 
   onClick, 
-  variant = 'default', 
+  variant = 'quick', 
   size = 'sm', 
   className = '',
   mode = 'consultant',
@@ -115,6 +115,7 @@ export function AIEnhancedButton({
     );
   }
 
+  // Fallback case - should not reach here but added for safety
   return (
     <Button
       variant="outline"
