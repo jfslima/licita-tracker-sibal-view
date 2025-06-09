@@ -13,7 +13,7 @@ import {
   Brain, BookOpen, AlertCircle, TrendingUp, Target,
   Download, Share2, Bookmark, History, Settings
 } from 'lucide-react';
-import { useGroqAI } from '@/hooks/useGroqAI';
+import { useAdvancedGroqAI } from '@/hooks/useAdvancedGroqAI';
 
 interface AIAssistantProps {
   isOpen: boolean;
@@ -68,7 +68,7 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
   const [inputMessage, setInputMessage] = useState('');
   const [selectedMode, setSelectedMode] = useState('consultant');
   const [isExpanded, setIsExpanded] = useState(true);
-  const { messages, isLoading, isStreaming, sendMessage, summarizeDocument, clearMessages } = useGroqAI();
+  const { messages, isLoading, isStreaming, sendMessage, analyzeDocument, clearMessages, exportConversation } = useAdvancedGroqAI();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -85,13 +85,11 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
     setInputMessage('');
     
     const currentMode = aiModes.find(m => m.id === selectedMode);
-    const modeContext = `Modo: ${currentMode?.name} - ${currentMode?.description}`;
-    
     const context = documentContext ? 
-      `${modeContext}\n\nDocumento: ${documentContext.title}\nTipo: ${documentContext.type}\nConteúdo: ${documentContext.text}` : 
-      modeContext;
+      `Documento: ${documentContext.title}\nTipo: ${documentContext.type}\nConteúdo: ${documentContext.text}` : 
+      undefined;
 
-    await sendMessage(message, context);
+    await sendMessage(message, context, selectedMode);
   };
 
   const handleQuickAction = async (actionId: string) => {
@@ -129,9 +127,8 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
         isExpanded ? 'max-w-6xl h-[90vh]' : 'max-w-4xl h-[80vh]'
       } flex flex-col shadow-2xl border-0 bg-white`}>
         
-        {/* Header Avançado */}
         <CardHeader className={`pb-4 bg-gradient-to-r ${currentMode?.color} text-white rounded-t-lg relative overflow-hidden`}>
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="20" height="20" xmlns="http://www.w3.org/2000/svg"%3E%3Cdefs%3E%3Cpattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"%3E%3Cpath d="M 20 0 L 0 0 0 20" fill="none" stroke="white" stroke-width="0.5" opacity="0.1"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width="100%25" height="100%25" fill="url(%23grid)"/%3E%3C/svg%3E')] opacity-10"></div>
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\"20\" height=\"20\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cdefs%3E%3Cpattern id=\"grid\" width=\"20\" height=\"20\" patternUnits=\"userSpaceOnUse\"%3E%3Cpath d=\"M 20 0 L 0 0 0 20\" fill=\"none\" stroke=\"white\" stroke-width=\"0.5\" opacity=\"0.1\"/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\"100%25\" height=\"100%25\" fill=\"url(%23grid)\"/%3E%3C/svg%3E')] opacity-10"></div>
           
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-6">
@@ -170,7 +167,6 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
               </div>
             </div>
 
-            {/* Seletor de Modo */}
             <div className="mb-4">
               <Select value={selectedMode} onValueChange={setSelectedMode}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white">
@@ -195,7 +191,6 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
               </Select>
             </div>
 
-            {/* Contexto do Documento */}
             {documentContext && (
               <div className="p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20">
                 <div className="flex items-center justify-between mb-3">
@@ -233,7 +228,6 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
           </div>
         </CardHeader>
 
-        {/* Área de Chat */}
         <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
           <ScrollArea ref={scrollAreaRef} className="flex-1 p-6">
             {messages.length === 0 ? (
@@ -325,7 +319,7 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
                     </div>
                     <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 shadow-lg">
                       <div className="flex items-center gap-3">
-                        <Loader2 className={`h-4 w-4 animate-spin text-blue-600`} />
+                        <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                         <span className="text-sm text-gray-600 font-medium">Analisando...</span>
                       </div>
                     </div>
@@ -337,7 +331,6 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
 
           <Separator />
           
-          {/* Input Avançado */}
           <div className="p-6 bg-gradient-to-r from-gray-50 to-blue-50">
             <div className="flex gap-3 mb-3">
               <Textarea
@@ -390,7 +383,12 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
                 </Button>
                 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled={isLoading}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={isLoading}
+                    onClick={exportConversation}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Exportar
                   </Button>
