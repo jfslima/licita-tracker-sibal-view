@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -170,6 +169,7 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
       } flex flex-col shadow-2xl border-0 bg-white overflow-hidden`}>
         
         <CardHeader className={`pb-4 bg-gradient-to-r ${currentMode?.color} text-white relative overflow-hidden flex-shrink-0`}>
+          
           <div className="absolute inset-0 bg-white/5 opacity-50"></div>
           
           <div className="relative z-10">
@@ -279,10 +279,10 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden min-h-0">
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
           <div className="flex-1 overflow-hidden">
-            <ScrollArea ref={scrollAreaRef} className="h-full w-full">
-              <div className="p-6">
+            <ScrollArea className="h-full">
+              <div className="p-6 space-y-6">
                 {messages.length === 0 ? (
                   <div className="text-center py-12">
                     <div className={`p-8 bg-gradient-to-br ${currentMode?.color} rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center`}>
@@ -330,13 +330,15 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
                           </div>
                         )}
                         
-                        <div className={`max-w-[75%] p-4 rounded-2xl shadow-lg ${
+                        <div className={`max-w-[85%] p-4 rounded-2xl shadow-lg ${
                           message.role === 'user' 
                             ? `bg-gradient-to-r ${currentMode?.color} text-white` 
                             : 'bg-gray-50 text-gray-900 border border-gray-200'
                         }`}>
-                          <div className="whitespace-pre-wrap leading-relaxed text-sm break-words">
-                            {message.content}
+                          <div className="prose prose-sm max-w-none">
+                            <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                              {message.content}
+                            </div>
                           </div>
                           <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/20">
                             <p className="text-xs opacity-70 flex items-center gap-1">
