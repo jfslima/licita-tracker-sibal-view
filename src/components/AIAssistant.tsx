@@ -76,10 +76,7 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
-      }
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -111,7 +108,8 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
     setInputMessage('');
     setAttachedFiles([]);
     
-    await sendMessage(message, context);
+    const currentMode = aiModes.find(m => m.id === selectedMode);
+    await sendMessage(message, context, selectedMode);
   };
 
   const handleQuickAction = async (actionId: string) => {
@@ -167,10 +165,9 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <Card className={`w-full transition-all duration-300 ${
         isExpanded ? 'max-w-6xl h-[90vh]' : 'max-w-4xl h-[80vh]'
-      } flex flex-col shadow-2xl border-0 bg-white overflow-hidden`}>
+      } flex flex-col shadow-2xl border-0 bg-white`}>
         
-        <CardHeader className={`pb-4 bg-gradient-to-r ${currentMode?.color} text-white relative overflow-hidden flex-shrink-0`}>
-          
+        <CardHeader className={`pb-4 bg-gradient-to-r ${currentMode?.color} text-white rounded-t-lg relative overflow-hidden`}>
           <div className="absolute inset-0 bg-white/5 opacity-50"></div>
           
           <div className="relative z-10">
@@ -281,114 +278,108 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
         </CardHeader>
 
         <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-          <div className="flex-1 overflow-hidden min-h-0">
-            <ScrollArea ref={scrollAreaRef} className="h-full w-full">
-              <div className="p-6 space-y-6 min-h-full">
-                {messages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className={`p-8 bg-gradient-to-br ${currentMode?.color} rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center`}>
-                      <ModeIcon className="h-12 w-12 text-white" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                      Como posso te ajudar hoje?
-                    </h3>
-                    <p className="text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed">
-                      Sou seu assistente especializado em licitações públicas. Posso analisar documentos, 
-                      responder dúvidas legais e fornecer orientações estratégicas.
-                    </p>
+          <ScrollArea ref={scrollAreaRef} className="flex-1 p-6">
+            {messages.length === 0 ? (
+              <div className="text-center py-12">
+                <div className={`p-8 bg-gradient-to-br ${currentMode?.color} rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center`}>
+                  <ModeIcon className="h-12 w-12 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  Como posso te ajudar hoje?
+                </h3>
+                <p className="text-gray-600 mb-8 max-w-lg mx-auto leading-relaxed">
+                  Sou seu assistente especializado em licitações públicas. Posso analisar documentos, 
+                  responder dúvidas legais e fornecer orientações estratégicas.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+                  {[
+                    { q: "Como funciona o processo licitatório no Brasil?", cat: "Processos" },
+                    { q: "Quais documentos preciso para participar?", cat: "Documentação" },
+                    { q: "Como interpretar um edital complexo?", cat: "Análise" },
+                    { q: "Quais são os prazos importantes?", cat: "Cronograma" }
+                  ].map((item, idx) => (
+                    <Button
+                      key={idx}
+                      variant="outline"
+                      onClick={() => {
+                        setInputMessage(item.q);
+                      }}
+                      disabled={isLoading}
+                      className="h-auto p-4 text-left justify-start border-2 hover:border-blue-300 transition-all"
+                    >
+                      <div>
+                        <div className="font-medium text-sm mb-1">{item.cat}</div>
+                        <div className="text-xs text-gray-600">{item.q}</div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {messages.map((message, index) => (
+                  <div key={index} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    {message.role === 'assistant' && (
+                      <div className={`p-3 bg-gradient-to-br ${currentMode?.color} rounded-xl shrink-0 shadow-lg`}>
+                        <ModeIcon className="h-5 w-5 text-white" />
+                      </div>
+                    )}
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-                      {[
-                        { q: "Como funciona o processo licitatório no Brasil?", cat: "Processos" },
-                        { q: "Quais documentos preciso para participar?", cat: "Documentação" },
-                        { q: "Como interpretar um edital complexo?", cat: "Análise" },
-                        { q: "Quais são os prazos importantes?", cat: "Cronograma" }
-                      ].map((item, idx) => (
-                        <Button
-                          key={idx}
-                          variant="outline"
-                          onClick={() => {
-                            setInputMessage(item.q);
-                          }}
-                          disabled={isLoading}
-                          className="h-auto p-4 text-left justify-start border-2 hover:border-blue-300 transition-all"
-                        >
-                          <div>
-                            <div className="font-medium text-sm mb-1">{item.cat}</div>
-                            <div className="text-xs text-gray-600">{item.q}</div>
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {messages.map((message, index) => (
-                      <div key={index} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[75%] p-4 rounded-2xl shadow-lg ${
+                      message.role === 'user' 
+                        ? `bg-gradient-to-r ${currentMode?.color} text-white` 
+                        : 'bg-gray-50 text-gray-900 border border-gray-200'
+                    }`}>
+                      <div className="whitespace-pre-wrap leading-relaxed text-sm">
+                        {message.content}
+                      </div>
+                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/20">
+                        <p className="text-xs opacity-70 flex items-center gap-1">
+                          {message.role === 'assistant' && <ModeIcon className="h-3 w-3" />}
+                          {message.timestamp.toLocaleTimeString('pt-BR')}
+                        </p>
                         {message.role === 'assistant' && (
-                          <div className={`p-3 bg-gradient-to-br ${currentMode?.color} rounded-xl shrink-0 shadow-lg`}>
-                            <ModeIcon className="h-5 w-5 text-white" />
-                          </div>
-                        )}
-                        
-                        <div className={`max-w-[80%] p-4 rounded-2xl shadow-lg ${
-                          message.role === 'user' 
-                            ? `bg-gradient-to-r ${currentMode?.color} text-white` 
-                            : 'bg-gray-50 text-gray-900 border border-gray-200'
-                        }`}>
-                          <div className="prose prose-sm max-w-none">
-                            <div className="whitespace-pre-wrap break-words text-sm leading-relaxed overflow-wrap-anywhere">
-                              {message.content}
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/20">
-                            <p className="text-xs opacity-70 flex items-center gap-1">
-                              {message.role === 'assistant' && <ModeIcon className="h-3 w-3" />}
-                              {message.timestamp.toLocaleTimeString('pt-BR')}
-                            </p>
-                            {message.role === 'assistant' && (
-                              <div className="flex gap-1">
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-70 hover:opacity-100">
-                                  <Bookmark className="h-3 w-3" />
-                                </Button>
-                                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-70 hover:opacity-100">
-                                  <Share2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {message.role === 'user' && (
-                          <div className={`p-3 bg-gradient-to-br ${currentMode?.color} rounded-xl shrink-0 shadow-lg`}>
-                            <User className="h-5 w-5 text-white" />
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-70 hover:opacity-100">
+                              <Bookmark className="h-3 w-3" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-70 hover:opacity-100">
+                              <Share2 className="h-3 w-3" />
+                            </Button>
                           </div>
                         )}
                       </div>
-                    ))}
+                    </div>
                     
-                    {isStreaming && (
-                      <div className="flex gap-4 justify-start">
-                        <div className={`p-3 bg-gradient-to-br ${currentMode?.color} rounded-xl shrink-0 shadow-lg`}>
-                          <ModeIcon className="h-5 w-5 text-white" />
-                        </div>
-                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 shadow-lg">
-                          <div className="flex items-center gap-3">
-                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                            <span className="text-sm text-gray-600 font-medium">Analisando...</span>
-                          </div>
-                        </div>
+                    {message.role === 'user' && (
+                      <div className={`p-3 bg-gradient-to-br ${currentMode?.color} rounded-xl shrink-0 shadow-lg`}>
+                        <User className="h-5 w-5 text-white" />
                       </div>
                     )}
                   </div>
+                ))}
+                
+                {isStreaming && (
+                  <div className="flex gap-4 justify-start">
+                    <div className={`p-3 bg-gradient-to-br ${currentMode?.color} rounded-xl shrink-0 shadow-lg`}>
+                      <ModeIcon className="h-5 w-5 text-white" />
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 shadow-lg">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                        <span className="text-sm text-gray-600 font-medium">Analisando...</span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-            </ScrollArea>
-          </div>
+            )}
+          </ScrollArea>
 
           <Separator />
           
-          <div className="p-6 bg-gradient-to-r from-gray-50 to-blue-50 flex-shrink-0">
+          <div className="p-6 bg-gradient-to-r from-gray-50 to-blue-50">
             {/* Arquivos anexados */}
             {attachedFiles.length > 0 && (
               <div className="mb-4">

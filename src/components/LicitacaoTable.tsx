@@ -142,107 +142,34 @@ export function LicitacaoTable({
 
   /** *************************************************************
    * Tenta abrir direto o primeiro arquivo do edital (/arquivos/1)
-   * E retorna informações para processamento pela IA
    * *************************************************************/
-  const tryOpenFirstFile = useCallback(async (item: PNCPItem): Promise<{ success: boolean; fileUrl?: string; fileInfo?: any }> => {
-    if (tipoDoc !== 'edital') return { success: false };
-    
+  const tryOpenFirstFile = useCallback(async (item: PNCPItem): Promise<boolean> => {
+    if (tipoDoc !== 'edital') return false;
     const orgao = item.orgao_cnpj ?? item.orgaoCnpj;
     const ano = item.ano ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
     const seq = item.numero_sequencial ?? item.numeroSequencial;
-    
-    if (!orgao || !ano || !seq) {
-      console.log('[PNCP] Dados insuficientes para construir URL do arquivo:', { orgao, ano, seq });
-      return { success: false };
-    }
+    if (!orgao || !ano || !seq) return false;
 
     const downloadUrl = `${base}/pncp-api/v1/orgaos/${orgao}/compras/${ano}/${seq}/arquivos/1`;
-    console.log('[PNCP] Tentando abrir arquivo direto:', downloadUrl);
 
     try {
-      // Primeira tentativa: HEAD request
-      const res = await fetch(downloadUrl, { 
-        method: 'HEAD',
-        mode: 'cors'
-      });
-      
-      if (res.ok) {
-        console.log('[PNCP] Arquivo encontrado via HEAD, abrindo...');
-        window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-        
-        // Retorna informações para a IA
-        return { 
-          success: true, 
-          fileUrl: downloadUrl,
-          fileInfo: {
-            orgao,
-            ano,
-            sequencial: seq,
-            tipo: 'edital',
-            contentType: res.headers.get('content-type'),
-            size: res.headers.get('content-length')
-          }
-        };
-      } else {
-        console.log('[PNCP] HEAD falhou com status:', res.status);
-      }
-    } catch (headError) {
-      console.log('[PNCP] HEAD request falhou, tentando abrir diretamente:', headError);
-      
-      // Se HEAD falhar (CORS, etc), tenta abrir diretamente
-      // Isso funciona porque se o arquivo existir, o browser consegue baixar
-      try {
-        window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-        console.log('[PNCP] Tentativa de abertura direta realizada');
-        
-        // Mesmo sem HEAD, retorna info para a IA
-        return { 
-          success: true, 
-          fileUrl: downloadUrl,
-          fileInfo: {
-            orgao,
-            ano,
-            sequencial: seq,
-            tipo: 'edital'
-          }
-        };
-      } catch (openError) {
-        console.warn('[PNCP] Falha ao abrir arquivo diretamente:', openError);
-      }
+      const res = await fetch(downloadUrl, { method: 'HEAD' });
+      if (!res.ok) throw new Error('Arquivo não encontrado');
+      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+      return true;
+    } catch (err) {
+      console.warn('[PNCP] Primeiro arquivo indisponível, fallback para página geral.');
+      return false;
     }
-
-    console.warn('[PNCP] Primeiro arquivo indisponível, fallback para página geral.');
-    return { success: false };
   }, [base, tipoDoc]);
 
   /** *************************************************************
    * Função principal de abertura de documentos
    * *************************************************************/
-  const openDocument = useCallback(async (item: PNCPItem) => {
-    console.log('[PNCP] Abrindo documento:', { tipoDoc, item: item.numero_controle_pncp });
-    
-    // ——— NOVO: Tentativa rápida para editais ———
-    if (tipoDoc === 'edital') {
-      const result = await tryOpenFirstFile(item);
-      if (result.success) {
-        // Se temos onAskAI disponível e conseguimos baixar o arquivo, oferece análise automática
-        if (onAskAI && result.fileUrl) {
-          // Pequeno delay para dar tempo do usuário ver o download
-          setTimeout(() => {
-            const enhancedItem = {
-              ...item,
-              _fileUrl: result.fileUrl,
-              _fileInfo: result.fileInfo,
-              _autoAnalysis: true
-            };
-            onAskAI(enhancedItem);
-          }, 2000);
-        }
-        return; // sucesso → arquivo aberto diretamente
-      }
-    }
+  const openDocument = async (item: PNCPItem) => {
+    // Tentativa rápida (apenas para editais)
+    if (await tryOpenFirstFile(item)) return;
 
-    // ——— Fluxo original mantido abaixo ———
     // Estrutura tradicional
     const direct = item.item_url ?? item.itemUrl;
     if (direct) {
@@ -279,7 +206,7 @@ export function LicitacaoTable({
     } else {
       alert('Não foi possível abrir este documento no PNCP.');
     }
-  }, [base, tipoDoc, tryOpenFirstFile, onAskAI, normalizePath]);
+  };
 
   /** *************************************************************
    * Renderização condicional: loading / vazio / tabela
@@ -435,13 +362,3 @@ export function LicitacaoTable({
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages - 1}
               className="hover:bg-blue-100 disabled:opacity-50"
-            >
-              Próximo
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,8 +16,6 @@ interface AIChatProps {
     text: string;
     type: string;
     title: string;
-    fileUrl?: string;
-    autoAnalysis?: boolean;
   };
 }
 
@@ -30,26 +29,6 @@ export function AIChat({ isOpen, onClose, documentContext }: AIChatProps) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
-
-  // Novo: análise automática quando documento tem arquivo baixado
-  useEffect(() => {
-    if (documentContext?.autoAnalysis && documentContext?.fileUrl && isOpen) {
-      const autoMessage = `Analise automaticamente este edital que foi baixado diretamente do PNCP:
-
-${documentContext.text}
-
-Por favor, forneça:
-1. Resumo executivo do objeto
-2. Principais exigências para participação
-3. Prazos importantes identificados
-4. Valor estimado e condições
-5. Pontos de atenção para licitantes`;
-
-      setTimeout(() => {
-        sendMessage(autoMessage);
-      }, 1000);
-    }
-  }, [documentContext, isOpen, sendMessage]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -93,17 +72,9 @@ Por favor, forneça:
                   <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
                     Sibal Pro
                   </Badge>
-                  {documentContext?.fileUrl && (
-                    <Badge variant="secondary" className="bg-green-500/20 text-white border-green-300/30">
-                      Arquivo Baixado
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-sm text-blue-100 font-normal mt-1">
-                  {documentContext?.fileUrl 
-                    ? 'Analisando documento baixado diretamente do PNCP'
-                    : 'Especialista em licitações públicas do Brasil'
-                  }
+                  Especialista em licitações públicas do Brasil
                 </p>
               </div>
             </CardTitle>
@@ -118,37 +89,23 @@ Por favor, forneça:
                 <div className="flex items-center gap-3">
                   <FileText className="h-5 w-5 text-blue-200" />
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                        {documentContext.type}
-                      </Badge>
-                      {documentContext.fileUrl && (
-                        <Badge variant="secondary" className="bg-green-500/20 text-white border-green-300/30">
-                          PDF Baixado
-                        </Badge>
-                      )}
-                    </div>
+                    <Badge variant="secondary" className="mb-2 bg-white/20 text-white border-white/30">
+                      {documentContext.type}
+                    </Badge>
                     <p className="text-sm font-medium text-white">{documentContext.title}</p>
-                    <p className="text-xs text-blue-200">
-                      {documentContext.fileUrl 
-                        ? 'Documento baixado e carregado para análise detalhada'
-                        : 'Documento carregado para análise'
-                      }
-                    </p>
+                    <p className="text-xs text-blue-200">Documento carregado para análise</p>
                   </div>
                 </div>
-                {!documentContext.autoAnalysis && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={handleSummarizeDocument}
-                    disabled={isLoading}
-                    className="bg-white/20 text-white border-white/30 hover:bg-white/30"
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Resumir
-                  </Button>
-                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleSummarizeDocument}
+                  disabled={isLoading}
+                  className="bg-white/20 text-white border-white/30 hover:bg-white/30"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Resumir
+                </Button>
               </div>
             </div>
           )}

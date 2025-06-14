@@ -203,40 +203,14 @@ export function LicitacaoSystem() {
   }, [page, pageSize]);
 
   const openAIWithDocument = (document: any) => {
-    let contextText = `Objeto: ${document.description || document.objeto || 'N/A'}
+    setAiDocumentContext({
+      text: `Objeto: ${document.description || document.objeto || 'N/A'}
 Órgão: ${document.orgao_nome || document.orgao || 'N/A'}
 Valor: ${document.valor_global || document.valor || 'N/A'}
 Status: ${document.situacao_nome || document.status || 'N/A'}
-Data: ${document.data_publicacao_pncp || document.dataPublicacao || 'N/A'}`;
-
-    // Se o documento tem arquivo baixado, inclui informações do arquivo
-    if (document._fileUrl && document._fileInfo) {
-      contextText += `
-
-ARQUIVO BAIXADO:
-URL: ${document._fileUrl}
-Tipo: ${document._fileInfo.tipo}
-Órgão CNPJ: ${document._fileInfo.orgao}
-Ano: ${document._fileInfo.ano}
-Sequencial: ${document._fileInfo.sequencial}`;
-
-      if (document._fileInfo.contentType) {
-        contextText += `
-Tipo de Conteúdo: ${document._fileInfo.contentType}`;
-      }
-      
-      if (document._fileInfo.size) {
-        contextText += `
-Tamanho: ${document._fileInfo.size} bytes`;
-      }
-    }
-
-    setAiDocumentContext({
-      text: contextText,
+Data: ${document.data_publicacao_pncp || document.dataPublicacao || 'N/A'}`,
       type: tipoDoc,
-      title: document.description || document.objeto || 'Documento de Licitação',
-      fileUrl: document._fileUrl,
-      autoAnalysis: document._autoAnalysis || false
+      title: document.description || document.objeto || 'Documento de Licitação'
     });
     setShowAIChat(true);
   };
