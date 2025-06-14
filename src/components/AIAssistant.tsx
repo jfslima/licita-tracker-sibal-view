@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -280,9 +281,9 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
         </CardHeader>
 
         <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6 space-y-6">
+          <div className="flex-1 overflow-hidden min-h-0">
+            <ScrollArea ref={scrollAreaRef} className="h-full w-full">
+              <div className="p-6 space-y-6 min-h-full">
                 {messages.length === 0 ? (
                   <div className="text-center py-12">
                     <div className={`p-8 bg-gradient-to-br ${currentMode?.color} rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center`}>
@@ -330,13 +331,13 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
                           </div>
                         )}
                         
-                        <div className={`max-w-[85%] p-4 rounded-2xl shadow-lg ${
+                        <div className={`max-w-[80%] p-4 rounded-2xl shadow-lg ${
                           message.role === 'user' 
                             ? `bg-gradient-to-r ${currentMode?.color} text-white` 
                             : 'bg-gray-50 text-gray-900 border border-gray-200'
                         }`}>
                           <div className="prose prose-sm max-w-none">
-                            <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                            <div className="whitespace-pre-wrap break-words text-sm leading-relaxed overflow-wrap-anywhere">
                               {message.content}
                             </div>
                           </div>
