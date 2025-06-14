@@ -1,4 +1,3 @@
-
 import React, { useMemo, useCallback } from 'react';
 import {
   Table,
@@ -146,9 +145,11 @@ export function LicitacaoTable({
    * *************************************************************/
   const tryOpenFirstFile = useCallback(async (item: PNCPItem): Promise<boolean> => {
     if (tipoDoc !== 'edital') return false;
+    
     const orgao = item.orgao_cnpj ?? item.orgaoCnpj;
     const ano = item.ano ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
     const seq = item.numero_sequencial ?? item.numeroSequencial;
+    
     if (!orgao || !ano || !seq) return false;
 
     const downloadUrl = `${base}/pncp-api/v1/orgaos/${orgao}/compras/${ano}/${seq}/arquivos/1`;
@@ -167,10 +168,14 @@ export function LicitacaoTable({
   /** *************************************************************
    * Função principal de abertura de documentos
    * *************************************************************/
-  const openDocument = async (item: PNCPItem) => {
-    // Tentativa rápida (apenas para editais)
-    if (await tryOpenFirstFile(item)) return;
+  const openDocument = useCallback(async (item: PNCPItem) => {
+    // ——— NOVO: Tentativa rápida para editais ———
+    if (tipoDoc === 'edital') {
+      const opened = await tryOpenFirstFile(item);
+      if (opened) return; // sucesso → arquivo aberto diretamente
+    }
 
+    // ——— Fluxo original mantido abaixo ———
     // Estrutura tradicional
     const direct = item.item_url ?? item.itemUrl;
     if (direct) {
@@ -207,7 +212,7 @@ export function LicitacaoTable({
     } else {
       alert('Não foi possível abrir este documento no PNCP.');
     }
-  };
+  }, [base, tipoDoc, tryOpenFirstFile, normalizePath]);
 
   /** *************************************************************
    * Renderização condicional: loading / vazio / tabela
