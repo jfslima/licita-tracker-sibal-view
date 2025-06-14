@@ -1,3 +1,4 @@
+
 import React, { useMemo, useCallback } from 'react';
 import {
   Table,
@@ -362,3 +363,13 @@ export function LicitacaoTable({
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages - 1}
               className="hover:bg-blue-100 disabled:opacity-50"
+            >
+              Próximo
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
