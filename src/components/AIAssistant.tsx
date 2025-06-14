@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -108,8 +107,7 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
     setInputMessage('');
     setAttachedFiles([]);
     
-    const currentMode = aiModes.find(m => m.id === selectedMode);
-    await sendMessage(message, context, selectedMode);
+    await sendMessage(message, context);
   };
 
   const handleQuickAction = async (actionId: string) => {

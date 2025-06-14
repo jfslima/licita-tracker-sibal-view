@@ -2,8 +2,8 @@
 import { useCallback } from 'react';
 import { useGroqAI } from './useGroqAI';
 
-export function useAdvancedGroqAI(apiKey?: string) {
-  const base = useGroqAI(apiKey);
+export function useAdvancedGroqAI() {
+  const base = useGroqAI();
 
   const getModePrompt = (mode: string) => {
     const prompts = {
@@ -27,7 +27,14 @@ export function useAdvancedGroqAI(apiKey?: string) {
     return prompts[mode as keyof typeof prompts] || prompts.consultant;
   };
 
-  const sendMessage = base.sendMessage;
+  const sendMessage = useCallback(
+    async (userMessage: string, context?: string) => {
+      const systemPrompt = getModePrompt('consultant');
+      const fullContext = context ? `${systemPrompt}\n\n${context}` : systemPrompt;
+      await base.sendMessage(userMessage, fullContext);
+    },
+    [base]
+  );
 
   const analyzeDocument = useCallback(
     async (text: string, type: string, analysisType: 'complete' | 'summary' | 'risks' | 'timeline' | 'legal' = 'complete') => {
@@ -67,6 +74,7 @@ export function useAdvancedGroqAI(apiKey?: string) {
 
   return {
     ...base,
+    sendMessage,
     analyzeDocument,
     clearMessages,
     exportConversation,
