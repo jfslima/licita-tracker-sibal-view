@@ -1,4 +1,3 @@
-
 import React, { useMemo, useCallback } from 'react';
 import {
   Table,
@@ -143,9 +142,10 @@ export function LicitacaoTable({
 
   /** *************************************************************
    * Tenta abrir direto o primeiro arquivo do edital (/arquivos/1)
+   * E retorna informações para processamento pela IA
    * *************************************************************/
-  const tryOpenFirstFile = useCallback(async (item: PNCPItem): Promise<boolean> => {
-    if (tipoDoc !== 'edital') return false;
+  const tryOpenFirstFile = useCallback(async (item: PNCPItem): Promise<{ success: boolean; fileUrl?: string; fileInfo?: any }> => {
+    if (tipoDoc !== 'edital') return { success: false };
     
     const orgao = item.orgao_cnpj ?? item.orgaoCnpj;
     const ano = item.ano ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
@@ -153,7 +153,7 @@ export function LicitacaoTable({
     
     if (!orgao || !ano || !seq) {
       console.log('[PNCP] Dados insuficientes para construir URL do arquivo:', { orgao, ano, seq });
-      return false;
+      return { success: false };
     }
 
     const downloadUrl = `${base}/pncp-api/v1/orgaos/${orgao}/compras/${ano}/${seq}/arquivos/1`;
@@ -169,7 +169,20 @@ export function LicitacaoTable({
       if (res.ok) {
         console.log('[PNCP] Arquivo encontrado via HEAD, abrindo...');
         window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-        return true;
+        
+        // Retorna informações para a IA
+        return { 
+          success: true, 
+          fileUrl: downloadUrl,
+          fileInfo: {
+            orgao,
+            ano,
+            sequencial: seq,
+            tipo: 'edital',
+            contentType: res.headers.get('content-type'),
+            size: res.headers.get('content-length')
+          }
+        };
       } else {
         console.log('[PNCP] HEAD falhou com status:', res.status);
       }
@@ -181,14 +194,25 @@ export function LicitacaoTable({
       try {
         window.open(downloadUrl, '_blank', 'noopener,noreferrer');
         console.log('[PNCP] Tentativa de abertura direta realizada');
-        return true;
+        
+        // Mesmo sem HEAD, retorna info para a IA
+        return { 
+          success: true, 
+          fileUrl: downloadUrl,
+          fileInfo: {
+            orgao,
+            ano,
+            sequencial: seq,
+            tipo: 'edital'
+          }
+        };
       } catch (openError) {
         console.warn('[PNCP] Falha ao abrir arquivo diretamente:', openError);
       }
     }
 
     console.warn('[PNCP] Primeiro arquivo indisponível, fallback para página geral.');
-    return false;
+    return { success: false };
   }, [base, tipoDoc]);
 
   /** *************************************************************
@@ -199,8 +223,23 @@ export function LicitacaoTable({
     
     // ——— NOVO: Tentativa rápida para editais ———
     if (tipoDoc === 'edital') {
-      const opened = await tryOpenFirstFile(item);
-      if (opened) return; // sucesso → arquivo aberto diretamente
+      const result = await tryOpenFirstFile(item);
+      if (result.success) {
+        // Se temos onAskAI disponível e conseguimos baixar o arquivo, oferece análise automática
+        if (onAskAI && result.fileUrl) {
+          // Pequeno delay para dar tempo do usuário ver o download
+          setTimeout(() => {
+            const enhancedItem = {
+              ...item,
+              _fileUrl: result.fileUrl,
+              _fileInfo: result.fileInfo,
+              _autoAnalysis: true
+            };
+            onAskAI(enhancedItem);
+          }, 2000);
+        }
+        return; // sucesso → arquivo aberto diretamente
+      }
     }
 
     // ——— Fluxo original mantido abaixo ———
@@ -240,7 +279,7 @@ export function LicitacaoTable({
     } else {
       alert('Não foi possível abrir este documento no PNCP.');
     }
-  }, [base, tipoDoc, tryOpenFirstFile, normalizePath]);
+  }, [base, tipoDoc, tryOpenFirstFile, onAskAI, normalizePath]);
 
   /** *************************************************************
    * Renderização condicional: loading / vazio / tabela
