@@ -1,3 +1,4 @@
+
 import React, { useMemo, useCallback } from 'react';
 import {
   Table,
@@ -150,25 +151,52 @@ export function LicitacaoTable({
     const ano = item.ano ?? new Date(item.data_publicacao_pncp ?? '').getFullYear();
     const seq = item.numero_sequencial ?? item.numeroSequencial;
     
-    if (!orgao || !ano || !seq) return false;
-
-    const downloadUrl = `${base}/pncp-api/v1/orgaos/${orgao}/compras/${ano}/${seq}/arquivos/1`;
-
-    try {
-      const res = await fetch(downloadUrl, { method: 'HEAD' });
-      if (!res.ok) throw new Error('Arquivo não encontrado');
-      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
-      return true;
-    } catch (err) {
-      console.warn('[PNCP] Primeiro arquivo indisponível, fallback para página geral.');
+    if (!orgao || !ano || !seq) {
+      console.log('[PNCP] Dados insuficientes para construir URL do arquivo:', { orgao, ano, seq });
       return false;
     }
+
+    const downloadUrl = `${base}/pncp-api/v1/orgaos/${orgao}/compras/${ano}/${seq}/arquivos/1`;
+    console.log('[PNCP] Tentando abrir arquivo direto:', downloadUrl);
+
+    try {
+      // Primeira tentativa: HEAD request
+      const res = await fetch(downloadUrl, { 
+        method: 'HEAD',
+        mode: 'cors'
+      });
+      
+      if (res.ok) {
+        console.log('[PNCP] Arquivo encontrado via HEAD, abrindo...');
+        window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+        return true;
+      } else {
+        console.log('[PNCP] HEAD falhou com status:', res.status);
+      }
+    } catch (headError) {
+      console.log('[PNCP] HEAD request falhou, tentando abrir diretamente:', headError);
+      
+      // Se HEAD falhar (CORS, etc), tenta abrir diretamente
+      // Isso funciona porque se o arquivo existir, o browser consegue baixar
+      try {
+        window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+        console.log('[PNCP] Tentativa de abertura direta realizada');
+        return true;
+      } catch (openError) {
+        console.warn('[PNCP] Falha ao abrir arquivo diretamente:', openError);
+      }
+    }
+
+    console.warn('[PNCP] Primeiro arquivo indisponível, fallback para página geral.');
+    return false;
   }, [base, tipoDoc]);
 
   /** *************************************************************
    * Função principal de abertura de documentos
    * *************************************************************/
   const openDocument = useCallback(async (item: PNCPItem) => {
+    console.log('[PNCP] Abrindo documento:', { tipoDoc, item: item.numero_controle_pncp });
+    
     // ——— NOVO: Tentativa rápida para editais ———
     if (tipoDoc === 'edital') {
       const opened = await tryOpenFirstFile(item);
