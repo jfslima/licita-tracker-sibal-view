@@ -17,7 +17,7 @@ const mcpServers = [
 export function withLovable(children: React.ReactNode) {
   return (
     <LovableProvider
-      apiKey={import.meta.env.VITE_MCP_API_KEY}
+      apiKey={import.meta.env.VITE_LOVABLE_API_KEY}
       mcpServers={mcpServers}
       model={import.meta.env.VITE_LOVABLE_MODEL}
     >
