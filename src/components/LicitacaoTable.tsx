@@ -1,4 +1,3 @@
-
 import React, { useMemo, useCallback } from 'react';
 import {
   Table,
@@ -25,7 +24,6 @@ import {
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AIButton } from './AIButton';
-
 /** ***************************************************************
  *  Types & Interfaces
  * ****************************************************************/
@@ -76,6 +74,8 @@ interface LicitacaoTableProps {
   onPageSizeChange: (pageSize: number) => void;
   onAskAI?: (item: PNCPItem) => void;
 }
+
+import { LovableChatButton } from './LovableChatButton';
 
 export function LicitacaoTable({
   data,
@@ -312,7 +312,7 @@ export function LicitacaoTable({
                       <ExternalLink className="h-4 w-4" />
                     </Button>
                     {onAskAI && (
-                      <AIButton variant="icon" onClick={() => onAskAI(item)} />
+                      <LovableChatButton variant="icon" onClick={() => onAskAI(item)} />
                     )}
                   </div>
                 </TableCell>
