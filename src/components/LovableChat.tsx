@@ -72,40 +72,40 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl border-0">
-        <CardHeader className="pb-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <Card className="w-full max-w-4xl h-[95vh] sm:h-[85vh] flex flex-col shadow-2xl border-0 overflow-hidden">
+        <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg flex-shrink-0">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                <Database className="h-6 w-6" />
+            <CardTitle className="flex items-center gap-2 sm:gap-3">
+              <div className="p-1.5 sm:p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                <Database className="h-4 w-4 sm:h-6 sm:w-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold">Assistente IA Avançado</span>
-                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                  <span className="text-lg sm:text-xl font-bold">Assistente IA Avançado</span>
+                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
                     MCP + Qdrant
                   </Badge>
                 </div>
-                <p className="text-sm text-blue-100 font-normal mt-1">
+                <p className="text-xs sm:text-sm text-blue-100 font-normal mt-1">
                   Especialista em licitações com busca vetorial inteligente
                 </p>
               </div>
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:bg-white/20">
-              <X className="h-5 w-5" />
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:bg-white/20 flex-shrink-0">
+              <X className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </div>
           
           {documentContext && (
-            <div className="mt-4 p-4 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
-              <div className="flex items-center gap-3">
-                <Database className="h-5 w-5 text-blue-200" />
-                <div>
-                  <Badge variant="secondary" className="mb-2 bg-white/20 text-white border-white/30">
+            <div className="mt-3 p-3 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Database className="h-4 w-4 sm:h-5 sm:w-5 text-blue-200 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <Badge variant="secondary" className="mb-1 bg-white/20 text-white border-white/30 text-xs">
                     {documentContext.type}
                   </Badge>
-                  <p className="text-sm font-medium text-white">{documentContext.title}</p>
+                  <p className="text-xs sm:text-sm font-medium text-white truncate">{documentContext.title}</p>
                   <p className="text-xs text-blue-200">Documento carregado para análise avançada</p>
                 </div>
               </div>
@@ -113,29 +113,29 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
           )}
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col p-0">
-          <ScrollArea className="flex-1 p-6">
+        <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+          <ScrollArea className="flex-1 p-3 sm:p-6">
             {history.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                  <Database className="h-10 w-10 text-blue-600" />
+              <div className="text-center py-8 sm:py-12">
+                <div className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 flex items-center justify-center">
+                  <Database className="h-8 w-8 sm:h-10 sm:w-10 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
                   Busca Inteligente com MCP + Qdrant
                 </h3>
-                <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto px-4">
                   Sistema avançado de busca vetorial para encontrar licitações similares e fazer análises profundas.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 max-w-2xl mx-auto px-4">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuickSearch("Busque licitações de drones com valor acima de R$ 1 milhão no DF")}
                     disabled={isLoading}
-                    className="justify-start h-auto p-4 text-left"
+                    className="justify-start h-auto p-3 sm:p-4 text-left"
                   >
                     <div className="text-left">
-                      <div className="font-medium">Busca Avançada</div>
+                      <div className="font-medium text-xs sm:text-sm">Busca Avançada</div>
                       <div className="text-xs text-gray-500">Drones &gt; R$ 1 mi no DF</div>
                     </div>
                   </Button>
@@ -144,10 +144,10 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
                     size="sm"
                     onClick={() => handleQuickSearch("Encontre licitações similares de tecnologia para segurança pública")}
                     disabled={isLoading}
-                    className="justify-start h-auto p-4 text-left"
+                    className="justify-start h-auto p-3 sm:p-4 text-left"
                   >
                     <div className="text-left">
-                      <div className="font-medium">Busca Semântica</div>
+                      <div className="font-medium text-xs sm:text-sm">Busca Semântica</div>
                       <div className="text-xs text-gray-500">Tecnologia + Segurança</div>
                     </div>
                   </Button>
@@ -156,10 +156,10 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
                     size="sm"
                     onClick={() => handleQuickSearch("Analise padrões de licitações de TI nos últimos 6 meses")}
                     disabled={isLoading}
-                    className="justify-start h-auto p-4 text-left"
+                    className="justify-start h-auto p-3 sm:p-4 text-left"
                   >
                     <div className="text-left">
-                      <div className="font-medium">Análise de Padrões</div>
+                      <div className="font-medium text-xs sm:text-sm">Análise de Padrões</div>
                       <div className="text-xs text-gray-500">TI - últimos 6 meses</div>
                     </div>
                   </Button>
@@ -168,48 +168,48 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
                     size="sm"
                     onClick={() => handleQuickSearch("Compare preços de equipamentos médicos em diferentes estados")}
                     disabled={isLoading}
-                    className="justify-start h-auto p-4 text-left"
+                    className="justify-start h-auto p-3 sm:p-4 text-left"
                   >
                     <div className="text-left">
-                      <div className="font-medium">Comparação</div>
+                      <div className="font-medium text-xs sm:text-sm">Comparação</div>
                       <div className="text-xs text-gray-500">Preços por região</div>
                     </div>
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {history.map((message, index) => (
-                  <div key={index} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div key={index} className={`flex gap-2 sm:gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {message.role === 'assistant' && (
-                      <div className="p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
-                        <Database className="h-5 w-5 text-blue-700" />
+                      <div className="p-2 sm:p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
+                        <Database className="h-4 w-4 sm:h-5 sm:w-5 text-blue-700" />
                       </div>
                     )}
-                    <div className={`max-w-[75%] p-4 rounded-2xl ${
+                    <div className={`max-w-[85%] sm:max-w-[75%] p-3 sm:p-4 rounded-2xl ${
                       message.role === 'user' 
                         ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
                         : 'bg-gray-50 text-gray-900 border border-gray-200'
                     }`}>
-                      <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                      <p className="text-xs opacity-70 mt-3 flex items-center gap-1">
+                      <p className="whitespace-pre-wrap leading-relaxed text-sm sm:text-base">{message.content}</p>
+                      <p className="text-xs opacity-70 mt-2 sm:mt-3 flex items-center gap-1">
                         {message.role === 'assistant' && <Database className="h-3 w-3" />}
                         {new Date().toLocaleTimeString('pt-BR')}
                       </p>
                     </div>
                     {message.role === 'user' && (
-                      <div className="p-2.5 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shrink-0">
-                        <User className="h-5 w-5 text-white" />
+                      <div className="p-2 sm:p-2.5 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shrink-0">
+                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                       </div>
                     )}
                   </div>
                 ))}
                 {isLoading && (
-                  <div className="flex gap-4 justify-start">
-                    <div className="p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
-                      <Database className="h-5 w-5 text-blue-700" />
+                  <div className="flex gap-2 sm:gap-4 justify-start">
+                    <div className="p-2 sm:p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
+                      <Database className="h-4 w-4 sm:h-5 sm:w-5 text-blue-700" />
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                    <div className="bg-gray-50 p-3 sm:p-4 rounded-2xl border border-gray-200">
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
                         <span className="text-sm text-gray-600">Pesquisando na base vetorial...</span>
@@ -223,21 +223,21 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
 
           <Separator />
           
-          <div className="p-6 bg-gray-50">
-            <div className="flex gap-3">
+          <div className="p-3 sm:p-6 bg-gray-50 flex-shrink-0">
+            <div className="flex gap-2 sm:gap-3">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Faça uma busca inteligente sobre licitações..."
                 disabled={isLoading}
-                className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm"
               />
               <Button 
                 onClick={handleSend} 
                 disabled={isLoading || !input.trim()}
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 px-6"
+                className="bg-blue-600 hover:bg-blue-700 px-4 sm:px-6 flex-shrink-0"
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -247,7 +247,7 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
               </Button>
             </div>
             
-            <div className="flex items-center justify-center mt-4 text-xs text-gray-500">
+            <div className="flex items-center justify-center mt-3 sm:mt-4 text-xs text-gray-500">
               <Database className="h-3 w-3 mr-1" />
               Demo mode - Configure .env.local para ativar integração MCP + Qdrant
             </div>
