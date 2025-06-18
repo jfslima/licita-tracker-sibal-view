@@ -115,7 +115,7 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
                   >
                     <div className="text-left">
                       <div className="font-medium">Busca Avançada</div>
-                      <div className="text-xs text-gray-500">Drones > R$ 1 mi no DF</div>
+                      <div className="text-xs text-gray-500">Drones &gt; R$ 1 mi no DF</div>
                     </div>
                   </Button>
                   <Button
