@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -124,113 +123,117 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-            {history.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Database className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  Busca Inteligente com MCP + Qdrant
-                </h3>
-                <p className="text-sm text-gray-600 mb-6 max-w-md mx-auto">
-                  Sistema avançado de busca vetorial para encontrar licitações similares e fazer análises profundas.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl mx-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickSearch("Busque licitações de drones com valor acima de R$ 1 milhão no DF")}
-                    disabled={isLoading}
-                    className="justify-start h-auto p-3 text-left"
-                  >
-                    <div className="text-left">
-                      <div className="font-medium text-sm">Busca Avançada</div>
-                      <div className="text-xs text-gray-500">Drones &gt; R$ 1 mi no DF</div>
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                {history.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                      <Database className="h-8 w-8 text-blue-600" />
                     </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickSearch("Encontre licitações similares de tecnologia para segurança pública")}
-                    disabled={isLoading}
-                    className="justify-start h-auto p-3 text-left"
-                  >
-                    <div className="text-left">
-                      <div className="font-medium text-sm">Busca Semântica</div>
-                      <div className="text-xs text-gray-500">Tecnologia + Segurança</div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      Busca Inteligente com MCP + Qdrant
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6 max-w-md mx-auto">
+                      Sistema avançado de busca vetorial para encontrar licitações similares e fazer análises profundas.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl mx-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleQuickSearch("Busque licitações de drones com valor acima de R$ 1 milhão no DF")}
+                        disabled={isLoading}
+                        className="justify-start h-auto p-3 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium text-sm">Busca Avançada</div>
+                          <div className="text-xs text-gray-500">Drones &gt; R$ 1 mi no DF</div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleQuickSearch("Encontre licitações similares de tecnologia para segurança pública")}
+                        disabled={isLoading}
+                        className="justify-start h-auto p-3 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium text-sm">Busca Semântica</div>
+                          <div className="text-xs text-gray-500">Tecnologia + Segurança</div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleQuickSearch("Analise padrões de licitações de TI nos últimos 6 meses")}
+                        disabled={isLoading}
+                        className="justify-start h-auto p-3 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium text-sm">Análise de Padrões</div>
+                          <div className="text-xs text-gray-500">TI - últimos 6 meses</div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleQuickSearch("Compare preços de equipamentos médicos em diferentes estados")}
+                        disabled={isLoading}
+                        className="justify-start h-auto p-3 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium text-sm">Comparação</div>
+                          <div className="text-xs text-gray-500">Preços por região</div>
+                        </div>
+                      </Button>
                     </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickSearch("Analise padrões de licitações de TI nos últimos 6 meses")}
-                    disabled={isLoading}
-                    className="justify-start h-auto p-3 text-left"
-                  >
-                    <div className="text-left">
-                      <div className="font-medium text-sm">Análise de Padrões</div>
-                      <div className="text-xs text-gray-500">TI - últimos 6 meses</div>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickSearch("Compare preços de equipamentos médicos em diferentes estados")}
-                    disabled={isLoading}
-                    className="justify-start h-auto p-3 text-left"
-                  >
-                    <div className="text-left">
-                      <div className="font-medium text-sm">Comparação</div>
-                      <div className="text-xs text-gray-500">Preços por região</div>
-                    </div>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {history.map((message, index) => (
-                  <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    {message.role === 'assistant' && (
-                      <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
-                        <Database className="h-4 w-4 text-blue-700" />
-                      </div>
-                    )}
-                    <div className={`max-w-[80%] p-3 rounded-2xl ${
-                      message.role === 'user' 
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
-                        : 'bg-gray-50 text-gray-900 border border-gray-200'
-                    }`}>
-                      <p className="whitespace-pre-wrap leading-relaxed text-sm">{message.content}</p>
-                      <p className="text-xs opacity-70 mt-2 flex items-center gap-1">
-                        {message.role === 'assistant' && <Database className="h-3 w-3" />}
-                        {new Date().toLocaleTimeString('pt-BR')}
-                      </p>
-                    </div>
-                    {message.role === 'user' && (
-                      <div className="p-2 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shrink-0">
-                        <User className="h-4 w-4 text-white" />
-                      </div>
-                    )}
                   </div>
-                ))}
-                {isLoading && (
-                  <div className="flex gap-3 justify-start">
-                    <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
-                      <Database className="h-4 w-4 text-blue-700" />
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded-2xl border border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                        <span className="text-sm text-gray-600">Pesquisando na base vetorial...</span>
+                ) : (
+                  <div className="space-y-4">
+                    {history.map((message, index) => (
+                      <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        {message.role === 'assistant' && (
+                          <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
+                            <Database className="h-4 w-4 text-blue-700" />
+                          </div>
+                        )}
+                        <div className={`max-w-[80%] p-3 rounded-2xl break-words overflow-wrap-anywhere ${
+                          message.role === 'user' 
+                            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
+                            : 'bg-gray-50 text-gray-900 border border-gray-200'
+                        }`}>
+                          <p className="whitespace-pre-wrap leading-relaxed text-sm break-words hyphens-auto">{message.content}</p>
+                          <p className="text-xs opacity-70 mt-2 flex items-center gap-1">
+                            {message.role === 'assistant' && <Database className="h-3 w-3" />}
+                            {new Date().toLocaleTimeString('pt-BR')}
+                          </p>
+                        </div>
+                        {message.role === 'user' && (
+                          <div className="p-2 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shrink-0">
+                            <User className="h-4 w-4 text-white" />
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    ))}
+                    {isLoading && (
+                      <div className="flex gap-3 justify-start">
+                        <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
+                          <Database className="h-4 w-4 text-blue-700" />
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                            <span className="text-sm text-gray-600">Pesquisando na base vetorial...</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </ScrollArea>
+            </ScrollArea>
+          </div>
 
           <Separator />
           
