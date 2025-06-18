@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useLovable } from '@lovable/chat';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,9 +18,31 @@ interface LovableChatProps {
   };
 }
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export function LovableChat({ isOpen, onClose, documentContext }: LovableChatProps) {
   const [input, setInput] = useState('');
-  const { sendMessage, history, isLoading } = useLovable();
+  const [history, setHistory] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const sendMessage = async (message: string) => {
+    setIsLoading(true);
+    const newMessage: ChatMessage = { role: 'user', content: message };
+    setHistory(prev => [...prev, newMessage]);
+    
+    // Mock response for demonstration
+    setTimeout(() => {
+      const response: ChatMessage = {
+        role: 'assistant',
+        content: 'Esta é uma demonstração do chat. Para ativar a integração completa com MCP/Qdrant, configure as variáveis de ambiente conforme o arquivo .env.local.example.'
+      };
+      setHistory(prev => [...prev, response]);
+      setIsLoading(false);
+    }, 1500);
+  };
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -228,7 +249,7 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
             
             <div className="flex items-center justify-center mt-4 text-xs text-gray-500">
               <Database className="h-3 w-3 mr-1" />
-              Conectado ao MCP + Qdrant para busca vetorial avançada
+              Demo mode - Configure .env.local para ativar integração MCP + Qdrant
             </div>
           </div>
         </CardContent>
