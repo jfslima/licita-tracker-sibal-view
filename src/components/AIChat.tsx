@@ -26,7 +26,10 @@ export function AIChat({ isOpen, onClose, documentContext }: AIChatProps) {
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
     }
   }, [messages]);
 
@@ -60,7 +63,7 @@ export function AIChat({ isOpen, onClose, documentContext }: AIChatProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl border-0">
-        <CardHeader className="pb-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+        <CardHeader className="pb-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg flex-shrink-0">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-3">
               <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -111,117 +114,121 @@ export function AIChat({ isOpen, onClose, documentContext }: AIChatProps) {
           )}
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col p-0">
-          <ScrollArea ref={scrollAreaRef} className="flex-1 p-6">
-            {messages.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                  <MessageSquare className="h-10 w-10 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  Como posso ajudar hoje?
-                </h3>
-                <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  Sou especialista em licitações públicas brasileiras. Faça perguntas sobre processos, documentos ou legislação.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => sendMessage("Como funciona o processo licitatório no Brasil?")}
-                    disabled={isLoading}
-                    className="justify-start h-auto p-4 text-left"
-                  >
-                    <div className="text-left">
-                      <div className="font-medium">Processo Licitatório</div>
-                      <div className="text-xs text-gray-500">Como funciona no Brasil?</div>
+        <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full">
+              <div className="p-6">
+                {messages.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                      <MessageSquare className="h-10 w-10 text-blue-600" />
                     </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => sendMessage("Quais são os tipos de modalidades de licitação?")}
-                    disabled={isLoading}
-                    className="justify-start h-auto p-4 text-left"
-                  >
-                    <div className="text-left">
-                      <div className="font-medium">Modalidades</div>
-                      <div className="text-xs text-gray-500">Tipos de licitação</div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">
+                      Como posso ajudar hoje?
+                    </h3>
+                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                      Sou especialista em licitações públicas brasileiras. Faça perguntas sobre processos, documentos ou legislação.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => sendMessage("Como funciona o processo licitatório no Brasil?")}
+                        disabled={isLoading}
+                        className="justify-start h-auto p-4 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">Processo Licitatório</div>
+                          <div className="text-xs text-gray-500">Como funciona no Brasil?</div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => sendMessage("Quais são os tipos de modalidades de licitação?")}
+                        disabled={isLoading}
+                        className="justify-start h-auto p-4 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">Modalidades</div>
+                          <div className="text-xs text-gray-500">Tipos de licitação</div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => sendMessage("Como participar de uma licitação pública?")}
+                        disabled={isLoading}
+                        className="justify-start h-auto p-4 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">Participação</div>
+                          <div className="text-xs text-gray-500">Como participar?</div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => sendMessage("Explique sobre o Portal Nacional de Contratações Públicas (PNCP)")}
+                        disabled={isLoading}
+                        className="justify-start h-auto p-4 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">PNCP</div>
+                          <div className="text-xs text-gray-500">Portal Nacional</div>
+                        </div>
+                      </Button>
                     </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => sendMessage("Como participar de uma licitação pública?")}
-                    disabled={isLoading}
-                    className="justify-start h-auto p-4 text-left"
-                  >
-                    <div className="text-left">
-                      <div className="font-medium">Participação</div>
-                      <div className="text-xs text-gray-500">Como participar?</div>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => sendMessage("Explique sobre o Portal Nacional de Contratações Públicas (PNCP)")}
-                    disabled={isLoading}
-                    className="justify-start h-auto p-4 text-left"
-                  >
-                    <div className="text-left">
-                      <div className="font-medium">PNCP</div>
-                      <div className="text-xs text-gray-500">Portal Nacional</div>
-                    </div>
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {messages.map((message, index) => (
-                  <div key={index} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    {message.role === 'assistant' && (
-                      <div className="p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
-                        <Bot className="h-5 w-5 text-blue-700" />
-                      </div>
-                    )}
-                    <div className={`max-w-[75%] p-4 rounded-2xl ${
-                      message.role === 'user' 
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
-                        : 'bg-gray-50 text-gray-900 border border-gray-200'
-                    }`}>
-                      <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                      <p className="text-xs opacity-70 mt-3 flex items-center gap-1">
-                        {message.role === 'assistant' && <Bot className="h-3 w-3" />}
-                        {message.timestamp.toLocaleTimeString('pt-BR')}
-                      </p>
-                    </div>
-                    {message.role === 'user' && (
-                      <div className="p-2.5 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shrink-0">
-                        <User className="h-5 w-5 text-white" />
-                      </div>
-                    )}
                   </div>
-                ))}
-                {isStreaming && (
-                  <div className="flex gap-4 justify-start">
-                    <div className="p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
-                      <Bot className="h-5 w-5 text-blue-700" />
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                        <span className="text-sm text-gray-600">Pensando...</span>
+                ) : (
+                  <div className="space-y-6">
+                    {messages.map((message, index) => (
+                      <div key={index} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        {message.role === 'assistant' && (
+                          <div className="p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
+                            <Bot className="h-5 w-5 text-blue-700" />
+                          </div>
+                        )}
+                        <div className={`max-w-[80%] p-4 rounded-2xl break-words overflow-wrap-anywhere ${
+                          message.role === 'user' 
+                            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
+                            : 'bg-gray-50 text-gray-900 border border-gray-200'
+                        }`}>
+                          <p className="whitespace-pre-wrap leading-relaxed text-sm break-words hyphens-auto">{message.content}</p>
+                          <p className="text-xs opacity-70 mt-3 flex items-center gap-1">
+                            {message.role === 'assistant' && <Bot className="h-3 w-3" />}
+                            {message.timestamp.toLocaleTimeString('pt-BR')}
+                          </p>
+                        </div>
+                        {message.role === 'user' && (
+                          <div className="p-2.5 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shrink-0">
+                            <User className="h-5 w-5 text-white" />
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    ))}
+                    {isStreaming && (
+                      <div className="flex gap-4 justify-start">
+                        <div className="p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
+                          <Bot className="h-5 w-5 text-blue-700" />
+                        </div>
+                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                            <span className="text-sm text-gray-600">Pensando...</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </ScrollArea>
+            </ScrollArea>
+          </div>
 
           <Separator />
           
-          <div className="p-6 bg-gray-50">
+          <div className="p-6 bg-gray-50 flex-shrink-0">
             <div className="flex gap-3">
               <Input
                 value={inputMessage}
