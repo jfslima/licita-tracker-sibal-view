@@ -24,7 +24,7 @@ export function useAdvancedGroqAI() {
   const [analysisHistory, setAnalysisHistory] = useState<AnalysisResult[]>([]);
   const { toast } = useToast();
 
-  const GROQ_API_KEY = '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';
+  const GROQ_API_KEY = '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';
   const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
   const getModePrompt = (mode: string) => {
@@ -84,16 +84,17 @@ Responda sempre de forma precisa, fundamentada na legislação e orientada à pr
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
           messages: [
             { role: 'system', content: systemPrompt },
             ...messages.map(m => ({ role: m.role, content: m.content })),
             { role: 'user', content: userMessage }
           ],
-          temperature: 0.7,
-          max_tokens: 2048,
+          temperature: 1,
+          max_completion_tokens: 1024,
           top_p: 1,
           stream: true,
+          stop: null,
         }),
       });
 
