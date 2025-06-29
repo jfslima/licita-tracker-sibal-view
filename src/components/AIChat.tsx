@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Send, Bot, User, Loader2, MessageSquare, X, FileText, Sparkles } from 'lucide-react';
-import { useGroqAI } from '@/hooks/useGroqAI';
+import { useMcpAI } from '@/hooks/useMcpAI';
 
 interface AIChatProps {
   isOpen: boolean;
@@ -21,7 +20,7 @@ interface AIChatProps {
 
 export function AIChat({ isOpen, onClose, documentContext }: AIChatProps) {
   const [inputMessage, setInputMessage] = useState('');
-  const { messages, isLoading, isStreaming, sendMessage, summarizeDocument, clearMessages } = useGroqAI();
+  const { messages, isLoading, isStreaming, sendMessage, summarizeDocument, clearMessages } = useMcpAI();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
