@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Send, Bot, User, Loader2, MessageSquare, X, Sparkles, Database } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageSquare, X, Sparkles, Database, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface LovableChatProps {
@@ -28,17 +29,12 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [lastError, setLastError] = useState<string>('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // URLs configuráveis para desenvolvimento e produção
-  const MCP_URLS = [
-    // Produção Railway (prioritário)
-    'https://licita-tracker-sibal-view-production.up.railway.app',
-    // Desenvolvimento local (fallback)
-    'http://localhost:8080',
-    'http://127.0.0.1:8080'
-  ];
+  // URL do MCP Server no Railway
+  const MCP_URL = 'https://licita-tracker-sibal-view-production.up.railway.app';
 
   useEffect(() => {
     if (isOpen) {
@@ -56,53 +52,33 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
   }, [history]);
 
   const checkMcpConnection = async () => {
-    console.log('🔍 Verificando conexões MCP...');
+    console.log('🔍 Verificando conexão MCP no Railway...');
+    setConnectionStatus('checking');
     
-    for (const url of MCP_URLS) {
-      try {
-        console.log(`Tentando conectar em: ${url}`);
-        const response = await fetch(`${url}/health`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          mode: 'cors'
-        });
-        
-        if (response.ok) {
-          setConnectionStatus('connected');
-          console.log(`✅ Servidor MCP conectado em: ${url}`);
-          return url;
-        }
-      } catch (error) {
-        console.log(`❌ Erro ao conectar em ${url}:`, error);
-        continue;
+    try {
+      console.log(`Tentando conectar em: ${MCP_URL}`);
+      const response = await fetch(`${MCP_URL}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors'
+      });
+      
+      if (response.ok) {
+        const healthData = await response.json();
+        setConnectionStatus('connected');
+        setLastError('');
+        console.log('✅ Servidor MCP conectado:', healthData);
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+    } catch (error) {
+      console.error('❌ Erro ao conectar no MCP Server:', error);
+      setConnectionStatus('error');
+      const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido';
+      setLastError(`Falha na conexão: ${errorMsg}`);
     }
-    
-    setConnectionStatus('error');
-    console.log('❌ Nenhum servidor MCP encontrado');
-    return null;
-  };
-
-  const getActiveServerUrl = async () => {
-    for (const url of MCP_URLS) {
-      try {
-        const response = await fetch(`${url}/health`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          mode: 'cors'
-        });
-        if (response.ok) {
-          return url;
-        }
-      } catch (error) {
-        continue;
-      }
-    }
-    return null;
   };
 
   const sendMessage = async (message: string) => {
@@ -115,9 +91,9 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
     setHistory(prev => [...prev, newMessage]);
     
     try {
-      const serverUrl = await getActiveServerUrl();
-      if (!serverUrl) {
-        throw new Error('Servidor MCP não está disponível');
+      // Verificar se o servidor está disponível
+      if (connectionStatus !== 'connected') {
+        throw new Error('Servidor MCP não está conectado. Clique em "Reconectar" para tentar novamente.');
       }
 
       // Verificar se precisa buscar licitações
@@ -130,7 +106,7 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
       if (shouldSearch) {
         console.log('🔍 Fazendo busca de licitações...');
         try {
-          const searchResponse = await fetch(`${serverUrl}/mcp/search_bids`, {
+          const searchResponse = await fetch(`${MCP_URL}/mcp/search_bids`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -163,7 +139,7 @@ ${documentContext ? `Contexto do documento: ${documentContext.title} (${document
 
 Responda sempre em português de forma educativa e prática.`;
 
-      const chatResponse = await fetch(`${serverUrl}/mcp/chat`, {
+      const chatResponse = await fetch(`${MCP_URL}/mcp/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -211,7 +187,7 @@ Responda sempre em português de forma educativa e prática.`;
       // Adicionar mensagem de erro ao chat
       const errorResponse: ChatMessage = {
         role: 'assistant',
-        content: `Desculpe, ocorreu um erro ao processar sua mensagem: ${errorMessage}\n\nVerifique se o servidor MCP está rodando:\n1. Abra o terminal\n2. Execute: cd mcp-server\n3. Execute: npm run dev\n\nOu use o script: ./start-system.sh`,
+        content: `❌ **Erro de Conexão**\n\n${errorMessage}\n\n**Possíveis soluções:**\n1. Clique em "Reconectar" para tentar novamente\n2. Verifique se o servidor MCP está online no Railway\n3. Confirme se a URL está correta: ${MCP_URL}`,
       };
       setHistory(prev => [...prev, errorResponse]);
     } finally {
@@ -267,12 +243,22 @@ Responda sempre em português de forma educativa e prática.`;
                      connectionStatus === 'error' ? '❌ Desconectado' :
                      '⏳ Verificando...'}
                   </Badge>
+                  {connectionStatus !== 'connected' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={checkMcpConnection}
+                      className="text-white hover:bg-white/20 text-xs px-2 py-1"
+                    >
+                      Reconectar
+                    </Button>
+                  )}
                 </div>
                 <p className="text-sm text-blue-100 font-normal">
                   Especialista em licitações com MCP + Groq AI
                 </p>
                 <p className="text-xs text-blue-200 mt-1">
-                  🚀 Railway: licita-tracker-sibal-view-production.up.railway.app | 🏠 Local: localhost:8080
+                  🚀 Railway: {MCP_URL.split('//')[1]}
                 </p>
               </div>
             </div>
@@ -280,6 +266,21 @@ Responda sempre em português de forma educativa e prática.`;
               <X className="h-5 w-5" />
             </Button>
           </div>
+          
+          {connectionStatus === 'error' && (
+            <div className="mt-3 p-3 bg-red-500/20 rounded-lg backdrop-blur-sm border border-red-400/30">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="h-4 w-4 text-red-200" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-red-100">Servidor MCP Desconectado</p>
+                  <p className="text-xs text-red-200">{lastError}</p>
+                  <p className="text-xs text-red-300 mt-1">
+                    <strong>Verifique:</strong> Railway deployment, CORS, API Keys
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           {documentContext && (
             <div className="mt-3 p-3 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
@@ -302,24 +303,6 @@ Responda sempre em português de forma educativa e prática.`;
           <div className="flex-1 overflow-hidden">
             <ScrollArea className="h-full">
               <div className="p-4">
-                {connectionStatus === 'error' && (
-                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-red-800">
-                      <X className="h-4 w-4" />
-                      <div>
-                        <p className="font-medium">Servidor MCP Desconectado</p>
-                        <p className="text-sm text-red-600">
-                          Tentando: Railway → localhost:8080
-                        </p>
-                        <div className="text-xs text-red-500 mt-2 space-y-1">
-                          <p><strong>Produção:</strong> Verificar Railway</p>
-                          <p><strong>Local:</strong> cd mcp-server && npm run dev</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {history.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
@@ -336,7 +319,7 @@ Responda sempre em português de forma educativa e prática.`;
                         variant="outline"
                         size="sm"
                         onClick={() => handleQuickSearch("Como funciona o processo licitatório no Brasil?")}
-                        disabled={isLoading || connectionStatus === 'error'}
+                        disabled={isLoading || connectionStatus !== 'connected'}
                         className="justify-start h-auto p-3 text-left"
                       >
                         <div className="text-left">
@@ -348,7 +331,7 @@ Responda sempre em português de forma educativa e prática.`;
                         variant="outline"
                         size="sm"
                         onClick={() => handleQuickSearch("Quais são os tipos de modalidades de licitação?")}
-                        disabled={isLoading || connectionStatus === 'error'}
+                        disabled={isLoading || connectionStatus !== 'connected'}
                         className="justify-start h-auto p-3 text-left"
                       >
                         <div className="text-left">
@@ -360,7 +343,7 @@ Responda sempre em português de forma educativa e prática.`;
                         variant="outline"
                         size="sm"
                         onClick={() => handleQuickSearch("Busque licitações de drones com valor acima de R$ 1 milhão no DF")}
-                        disabled={isLoading || connectionStatus === 'error'}
+                        disabled={isLoading || connectionStatus !== 'connected'}
                         className="justify-start h-auto p-3 text-left"
                       >
                         <div className="text-left">
@@ -372,7 +355,7 @@ Responda sempre em português de forma educativa e prática.`;
                         variant="outline"
                         size="sm"
                         onClick={() => handleQuickSearch("Explique sobre a Lei 14.133/21 e suas principais mudanças")}
-                        disabled={isLoading || connectionStatus === 'error'}
+                        disabled={isLoading || connectionStatus !== 'connected'}
                         className="justify-start h-auto p-3 text-left"
                       >
                         <div className="text-left">
@@ -438,12 +421,12 @@ Responda sempre em português de forma educativa e prática.`;
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Faça uma pergunta sobre licitações..."
-                disabled={isLoading || connectionStatus === 'error'}
+                disabled={isLoading || connectionStatus !== 'connected'}
                 className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
               <Button 
                 onClick={handleSend} 
-                disabled={isLoading || !input.trim() || connectionStatus === 'error'}
+                disabled={isLoading || !input.trim() || connectionStatus !== 'connected'}
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 px-4"
               >
@@ -457,9 +440,11 @@ Responda sempre em português de forma educativa e prática.`;
             
             <div className="flex items-center justify-center mt-3 text-xs text-gray-500">
               <Database className="h-3 w-3 mr-1" />
-              {connectionStatus === 'connected' ? '🚀 Sistema ativo - Railway MCP + Groq AI' :
-               connectionStatus === 'error' ? '❌ Sistema desconectado - Verificando Railway/Local' :
-               'Verificando Railway → localhost...'}
+              {connectionStatus === 'connected' ? 
+                '🚀 Sistema ativo - Railway MCP + Groq AI' :
+                connectionStatus === 'error' ? 
+                '❌ Sistema desconectado - Clique em "Reconectar"' :
+                '⏳ Verificando conexão...'}
             </div>
           </div>
         </div>
