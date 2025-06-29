@@ -33,9 +33,11 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
 
   // URLs configuráveis para desenvolvimento e produção
   const MCP_URLS = [
+    // Produção Railway (prioritário)
+    'https://licita-tracker-sibal-view-production.up.railway.app',
+    // Desenvolvimento local (fallback)
     'http://localhost:8080',
-    'http://127.0.0.1:8080',
-    'https://localhost:8080'
+    'http://127.0.0.1:8080'
   ];
 
   useEffect(() => {
@@ -270,7 +272,7 @@ Responda sempre em português de forma educativa e prática.`;
                   Especialista em licitações com MCP + Groq AI
                 </p>
                 <p className="text-xs text-blue-200 mt-1">
-                  Testando conexões: localhost:8080, 127.0.0.1:8080
+                  🚀 Railway: licita-tracker-sibal-view-production.up.railway.app | 🏠 Local: localhost:8080
                 </p>
               </div>
             </div>
@@ -307,14 +309,11 @@ Responda sempre em português de forma educativa e prática.`;
                       <div>
                         <p className="font-medium">Servidor MCP Desconectado</p>
                         <p className="text-sm text-red-600">
-                          Não foi possível conectar com o servidor MCP
+                          Tentando: Railway → localhost:8080
                         </p>
                         <div className="text-xs text-red-500 mt-2 space-y-1">
-                          <p>Para iniciar o servidor:</p>
-                          <p>1. Abra o terminal</p>
-                          <p>2. Execute: cd mcp-server</p>
-                          <p>3. Execute: npm run dev</p>
-                          <p>Ou use: ./start-system.sh</p>
+                          <p><strong>Produção:</strong> Verificar Railway</p>
+                          <p><strong>Local:</strong> cd mcp-server && npm run dev</p>
                         </div>
                       </div>
                     </div>
@@ -458,9 +457,9 @@ Responda sempre em português de forma educativa e prática.`;
             
             <div className="flex items-center justify-center mt-3 text-xs text-gray-500">
               <Database className="h-3 w-3 mr-1" />
-              {connectionStatus === 'connected' ? 'Sistema ativo - MCP + Groq AI' :
-               connectionStatus === 'error' ? 'Sistema desconectado - Verifique o servidor MCP' :
-               'Verificando conexão...'}
+              {connectionStatus === 'connected' ? '🚀 Sistema ativo - Railway MCP + Groq AI' :
+               connectionStatus === 'error' ? '❌ Sistema desconectado - Verificando Railway/Local' :
+               'Verificando Railway → localhost...'}
             </div>
           </div>
         </div>
