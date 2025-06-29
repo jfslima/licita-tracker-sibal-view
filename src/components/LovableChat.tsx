@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +31,12 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const MCP_URL = import.meta.env.VITE_MCP_URL || 'http://localhost:8080';
+  // URLs configuráveis para desenvolvimento e produção
+  const MCP_URLS = [
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'https://localhost:8080'
+  ];
 
   useEffect(() => {
     if (isOpen) {
@@ -50,20 +54,53 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
   }, [history]);
 
   const checkMcpConnection = async () => {
-    console.log('🔍 Verificando conexão MCP em:', MCP_URL);
-    try {
-      const response = await fetch(`${MCP_URL}/health`);
-      if (response.ok) {
-        setConnectionStatus('connected');
-        console.log('✅ Servidor MCP conectado');
-      } else {
-        setConnectionStatus('error');
-        console.log('❌ Servidor MCP retornou erro:', response.status);
+    console.log('🔍 Verificando conexões MCP...');
+    
+    for (const url of MCP_URLS) {
+      try {
+        console.log(`Tentando conectar em: ${url}`);
+        const response = await fetch(`${url}/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          mode: 'cors'
+        });
+        
+        if (response.ok) {
+          setConnectionStatus('connected');
+          console.log(`✅ Servidor MCP conectado em: ${url}`);
+          return url;
+        }
+      } catch (error) {
+        console.log(`❌ Erro ao conectar em ${url}:`, error);
+        continue;
       }
-    } catch (error) {
-      setConnectionStatus('error');
-      console.log('❌ Erro ao conectar com servidor MCP:', error);
     }
+    
+    setConnectionStatus('error');
+    console.log('❌ Nenhum servidor MCP encontrado');
+    return null;
+  };
+
+  const getActiveServerUrl = async () => {
+    for (const url of MCP_URLS) {
+      try {
+        const response = await fetch(`${url}/health`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          mode: 'cors'
+        });
+        if (response.ok) {
+          return url;
+        }
+      } catch (error) {
+        continue;
+      }
+    }
+    return null;
   };
 
   const sendMessage = async (message: string) => {
@@ -76,6 +113,11 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
     setHistory(prev => [...prev, newMessage]);
     
     try {
+      const serverUrl = await getActiveServerUrl();
+      if (!serverUrl) {
+        throw new Error('Servidor MCP não está disponível');
+      }
+
       // Verificar se precisa buscar licitações
       const shouldSearch = message.toLowerCase().includes('buscar') || 
                           message.toLowerCase().includes('encontrar') ||
@@ -86,11 +128,12 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
       if (shouldSearch) {
         console.log('🔍 Fazendo busca de licitações...');
         try {
-          const searchResponse = await fetch(`${MCP_URL}/mcp/search_bids`, {
+          const searchResponse = await fetch(`${serverUrl}/mcp/search_bids`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
+            mode: 'cors',
             body: JSON.stringify({ query: message })
           });
 
@@ -118,18 +161,19 @@ ${documentContext ? `Contexto do documento: ${documentContext.title} (${document
 
 Responda sempre em português de forma educativa e prática.`;
 
-      const chatResponse = await fetch(`${MCP_URL}/mcp/chat`, {
+      const chatResponse = await fetch(`${serverUrl}/mcp/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        mode: 'cors',
         body: JSON.stringify({
           messages: [
             { role: 'system', content: systemPrompt },
             ...history.map(m => ({ role: m.role, content: m.content })),
             { role: 'user', content: message + searchResults }
           ],
-          temperature: 1,
+          temperature: 0.7,
           max_tokens: 1024,
           top_p: 1,
         }),
@@ -138,7 +182,8 @@ Responda sempre em português de forma educativa e prática.`;
       console.log('📡 Status da resposta da IA:', chatResponse.status);
 
       if (!chatResponse.ok) {
-        throw new Error(`Erro na API MCP: ${chatResponse.status} - ${chatResponse.statusText}`);
+        const errorText = await chatResponse.text();
+        throw new Error(`Erro na API MCP: ${chatResponse.status} - ${errorText}`);
       }
 
       const data = await chatResponse.json();
@@ -164,7 +209,7 @@ Responda sempre em português de forma educativa e prática.`;
       // Adicionar mensagem de erro ao chat
       const errorResponse: ChatMessage = {
         role: 'assistant',
-        content: `Desculpe, ocorreu um erro ao processar sua mensagem: ${errorMessage}\n\nVerifique se o servidor MCP está rodando em ${MCP_URL}`,
+        content: `Desculpe, ocorreu um erro ao processar sua mensagem: ${errorMessage}\n\nVerifique se o servidor MCP está rodando:\n1. Abra o terminal\n2. Execute: cd mcp-server\n3. Execute: npm run dev\n\nOu use o script: ./start-system.sh`,
       };
       setHistory(prev => [...prev, errorResponse]);
     } finally {
@@ -225,7 +270,7 @@ Responda sempre em português de forma educativa e prática.`;
                   Especialista em licitações com MCP + Groq AI
                 </p>
                 <p className="text-xs text-blue-200 mt-1">
-                  Servidor: {MCP_URL}
+                  Testando conexões: localhost:8080, 127.0.0.1:8080
                 </p>
               </div>
             </div>
@@ -262,11 +307,15 @@ Responda sempre em português de forma educativa e prática.`;
                       <div>
                         <p className="font-medium">Servidor MCP Desconectado</p>
                         <p className="text-sm text-red-600">
-                          Não foi possível conectar com o servidor em {MCP_URL}
+                          Não foi possível conectar com o servidor MCP
                         </p>
-                        <p className="text-xs text-red-500 mt-1">
-                          Execute: cd mcp-server && npm run dev
-                        </p>
+                        <div className="text-xs text-red-500 mt-2 space-y-1">
+                          <p>Para iniciar o servidor:</p>
+                          <p>1. Abra o terminal</p>
+                          <p>2. Execute: cd mcp-server</p>
+                          <p>3. Execute: npm run dev</p>
+                          <p>Ou use: ./start-system.sh</p>
+                        </div>
                       </div>
                     </div>
                   </div>
