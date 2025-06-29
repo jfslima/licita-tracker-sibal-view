@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Send, Bot, User, Loader2, MessageSquare, X, Sparkles, Database } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface LovableChatProps {
   isOpen: boolean;
@@ -26,7 +28,17 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  const MCP_URL = import.meta.env.VITE_MCP_URL || 'http://localhost:8080';
+
+  useEffect(() => {
+    if (isOpen) {
+      checkMcpConnection();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -37,20 +49,127 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
     }
   }, [history]);
 
+  const checkMcpConnection = async () => {
+    console.log('🔍 Verificando conexão MCP em:', MCP_URL);
+    try {
+      const response = await fetch(`${MCP_URL}/health`);
+      if (response.ok) {
+        setConnectionStatus('connected');
+        console.log('✅ Servidor MCP conectado');
+      } else {
+        setConnectionStatus('error');
+        console.log('❌ Servidor MCP retornou erro:', response.status);
+      }
+    } catch (error) {
+      setConnectionStatus('error');
+      console.log('❌ Erro ao conectar com servidor MCP:', error);
+    }
+  };
+
   const sendMessage = async (message: string) => {
+    if (!message.trim() || isLoading) return;
+
+    console.log('📤 Enviando mensagem:', message);
+    
     setIsLoading(true);
     const newMessage: ChatMessage = { role: 'user', content: message };
     setHistory(prev => [...prev, newMessage]);
     
-    // Mock response for demonstration
-    setTimeout(() => {
-      const response: ChatMessage = {
+    try {
+      // Verificar se precisa buscar licitações
+      const shouldSearch = message.toLowerCase().includes('buscar') || 
+                          message.toLowerCase().includes('encontrar') ||
+                          message.toLowerCase().includes('licitações') ||
+                          message.toLowerCase().includes('drones');
+
+      let searchResults = '';
+      if (shouldSearch) {
+        console.log('🔍 Fazendo busca de licitações...');
+        try {
+          const searchResponse = await fetch(`${MCP_URL}/mcp/search_bids`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: message })
+          });
+
+          if (searchResponse.ok) {
+            const results = await searchResponse.json();
+            console.log('✅ Resultados da busca:', results);
+            searchResults = `\n\nResultados encontrados:\n${JSON.stringify(results, null, 2)}`;
+          } else {
+            console.log('⚠️ Erro na busca:', searchResponse.status);
+          }
+        } catch (error) {
+          console.warn('⚠️ Erro na busca de licitações:', error);
+        }
+      }
+
+      // Enviar para IA
+      console.log('🤖 Enviando para IA via MCP...');
+      const systemPrompt = `Você é um assistente especializado em licitações públicas no Brasil. Responda de forma clara e objetiva sobre:
+- Processos licitatórios e legislação brasileira
+- Lei 8.666/93 e Lei 14.133/21
+- Portal Nacional de Contratações Públicas (PNCP)
+- Modalidades de licitação e documentação
+
+${documentContext ? `Contexto do documento: ${documentContext.title} (${documentContext.type})\nConteúdo: ${documentContext.text}` : ''}
+
+Responda sempre em português de forma educativa e prática.`;
+
+      const chatResponse = await fetch(`${MCP_URL}/mcp/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...history.map(m => ({ role: m.role, content: m.content })),
+            { role: 'user', content: message + searchResults }
+          ],
+          temperature: 1,
+          max_tokens: 1024,
+          top_p: 1,
+        }),
+      });
+
+      console.log('📡 Status da resposta da IA:', chatResponse.status);
+
+      if (!chatResponse.ok) {
+        throw new Error(`Erro na API MCP: ${chatResponse.status} - ${chatResponse.statusText}`);
+      }
+
+      const data = await chatResponse.json();
+      console.log('✅ Resposta da IA recebida:', data);
+
+      const assistantMessage: ChatMessage = {
         role: 'assistant',
-        content: 'Esta é uma demonstração do chat. Para ativar a integração completa com MCP/Qdrant, configure as variáveis de ambiente conforme o arquivo .env.local.example.'
+        content: data.choices?.[0]?.message?.content || 'Desculpe, não consegui processar sua mensagem. Tente novamente.',
       };
-      setHistory(prev => [...prev, response]);
+
+      setHistory(prev => [...prev, assistantMessage]);
+
+    } catch (error) {
+      console.error('❌ Erro completo:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+      
+      toast({
+        title: "Erro na IA",
+        description: `Não foi possível processar sua mensagem: ${errorMessage}`,
+        variant: "destructive",
+      });
+
+      // Adicionar mensagem de erro ao chat
+      const errorResponse: ChatMessage = {
+        role: 'assistant',
+        content: `Desculpe, ocorreu um erro ao processar sua mensagem: ${errorMessage}\n\nVerifique se o servidor MCP está rodando em ${MCP_URL}`,
+      };
+      setHistory(prev => [...prev, errorResponse]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleSend = async () => {
@@ -91,13 +210,22 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold">Assistente IA Avançado</span>
-                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-xs">
-                    MCP + Qdrant
+                  <span className="text-lg font-bold">Assistente IA Sibal</span>
+                  <Badge variant="secondary" className={`text-xs border-white/30 ${
+                    connectionStatus === 'connected' ? 'bg-green-500/20 text-green-100' :
+                    connectionStatus === 'error' ? 'bg-red-500/20 text-red-100' :
+                    'bg-yellow-500/20 text-yellow-100'
+                  }`}>
+                    {connectionStatus === 'connected' ? '✅ Conectado' :
+                     connectionStatus === 'error' ? '❌ Desconectado' :
+                     '⏳ Verificando...'}
                   </Badge>
                 </div>
                 <p className="text-sm text-blue-100 font-normal">
-                  Especialista em licitações com busca vetorial inteligente
+                  Especialista em licitações com MCP + Groq AI
+                </p>
+                <p className="text-xs text-blue-200 mt-1">
+                  Servidor: {MCP_URL}
                 </p>
               </div>
             </div>
@@ -115,7 +243,7 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
                     {documentContext.type}
                   </Badge>
                   <p className="text-sm font-medium text-white truncate">{documentContext.title}</p>
-                  <p className="text-xs text-blue-200">Documento carregado para análise avançada</p>
+                  <p className="text-xs text-blue-200">Documento carregado para análise</p>
                 </div>
               </div>
             </div>
@@ -127,23 +255,64 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
           <div className="flex-1 overflow-hidden">
             <ScrollArea className="h-full">
               <div className="p-4">
+                {connectionStatus === 'error' && (
+                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-red-800">
+                      <X className="h-4 w-4" />
+                      <div>
+                        <p className="font-medium">Servidor MCP Desconectado</p>
+                        <p className="text-sm text-red-600">
+                          Não foi possível conectar com o servidor em {MCP_URL}
+                        </p>
+                        <p className="text-xs text-red-500 mt-1">
+                          Execute: cd mcp-server && npm run dev
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {history.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                       <Database className="h-8 w-8 text-blue-600" />
                     </div>
                     <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      Busca Inteligente com MCP + Qdrant
+                      Assistente IA Especializado
                     </h3>
                     <p className="text-sm text-gray-600 mb-6 max-w-md mx-auto">
-                      Sistema avançado de busca vetorial para encontrar licitações similares e fazer análises profundas.
+                      Sistema de IA com conhecimento especializado em licitações públicas do Brasil.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl mx-auto">
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => handleQuickSearch("Como funciona o processo licitatório no Brasil?")}
+                        disabled={isLoading || connectionStatus === 'error'}
+                        className="justify-start h-auto p-3 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium text-sm">Processo Licitatório</div>
+                          <div className="text-xs text-gray-500">Como funciona no Brasil?</div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleQuickSearch("Quais são os tipos de modalidades de licitação?")}
+                        disabled={isLoading || connectionStatus === 'error'}
+                        className="justify-start h-auto p-3 text-left"
+                      >
+                        <div className="text-left">
+                          <div className="font-medium text-sm">Modalidades</div>
+                          <div className="text-xs text-gray-500">Tipos de licitação</div>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleQuickSearch("Busque licitações de drones com valor acima de R$ 1 milhão no DF")}
-                        disabled={isLoading}
+                        disabled={isLoading || connectionStatus === 'error'}
                         className="justify-start h-auto p-3 text-left"
                       >
                         <div className="text-left">
@@ -154,37 +323,13 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleQuickSearch("Encontre licitações similares de tecnologia para segurança pública")}
-                        disabled={isLoading}
+                        onClick={() => handleQuickSearch("Explique sobre a Lei 14.133/21 e suas principais mudanças")}
+                        disabled={isLoading || connectionStatus === 'error'}
                         className="justify-start h-auto p-3 text-left"
                       >
                         <div className="text-left">
-                          <div className="font-medium text-sm">Busca Semântica</div>
-                          <div className="text-xs text-gray-500">Tecnologia + Segurança</div>
-                        </div>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleQuickSearch("Analise padrões de licitações de TI nos últimos 6 meses")}
-                        disabled={isLoading}
-                        className="justify-start h-auto p-3 text-left"
-                      >
-                        <div className="text-left">
-                          <div className="font-medium text-sm">Análise de Padrões</div>
-                          <div className="text-xs text-gray-500">TI - últimos 6 meses</div>
-                        </div>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleQuickSearch("Compare preços de equipamentos médicos em diferentes estados")}
-                        disabled={isLoading}
-                        className="justify-start h-auto p-3 text-left"
-                      >
-                        <div className="text-left">
-                          <div className="font-medium text-sm">Comparação</div>
-                          <div className="text-xs text-gray-500">Preços por região</div>
+                          <div className="font-medium text-sm">Nova Lei</div>
+                          <div className="text-xs text-gray-500">Lei 14.133/21</div>
                         </div>
                       </Button>
                     </div>
@@ -224,7 +369,7 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
                         <div className="bg-gray-50 p-3 rounded-2xl border border-gray-200">
                           <div className="flex items-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                            <span className="text-sm text-gray-600">Pesquisando na base vetorial...</span>
+                            <span className="text-sm text-gray-600">Processando com IA...</span>
                           </div>
                         </div>
                       </div>
@@ -244,13 +389,13 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Faça uma busca inteligente sobre licitações..."
-                disabled={isLoading}
+                placeholder="Faça uma pergunta sobre licitações..."
+                disabled={isLoading || connectionStatus === 'error'}
                 className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
               />
               <Button 
                 onClick={handleSend} 
-                disabled={isLoading || !input.trim()}
+                disabled={isLoading || !input.trim() || connectionStatus === 'error'}
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 px-4"
               >
@@ -264,7 +409,9 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
             
             <div className="flex items-center justify-center mt-3 text-xs text-gray-500">
               <Database className="h-3 w-3 mr-1" />
-              Demo mode - Configure .env.local para ativar integração MCP + Qdrant
+              {connectionStatus === 'connected' ? 'Sistema ativo - MCP + Groq AI' :
+               connectionStatus === 'error' ? 'Sistema desconectado - Verifique o servidor MCP' :
+               'Verificando conexão...'}
             </div>
           </div>
         </div>
