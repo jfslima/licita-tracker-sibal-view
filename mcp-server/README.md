@@ -3,39 +3,36 @@
 
 Servidor MCP (Model Context Protocol) para integração com APIs de licitações e Groq AI.
 
-## Configuração
+## Configuração Rápida
 
-1. Copie `.env.example` para `.env`
-2. Configure suas variáveis de ambiente:
-   ```
-   GROQ_API_KEY=sua_chave_groq_aqui
-   GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
-   PORT=8080
-   ```
-
-## Desenvolvimento
+1. O arquivo `.env` já está configurado com a chave da API Groq
+2. Execute os comandos abaixo:
 
 ```bash
+# Instalar dependências
 npm install
+
+# Executar em modo desenvolvimento
 npm run dev
 ```
 
-## Produção
+O servidor estará disponível em `http://localhost:8080`
 
-```bash
-npm run build
-npm start
-```
-
-## Endpoints
+## Endpoints Disponíveis
 
 - `GET /health` - Health check
 - `POST /mcp/search_bids` - Buscar licitações
 - `POST /mcp/chat` - Chat com IA via Groq
 
-## Docker
+## Como Usar
+
+1. **Backend**: Na pasta `mcp-server/`, execute `npm run dev`
+2. **Frontend**: Na pasta raiz, execute `npm run dev`
+3. **Teste**: Acesse a aplicação e clique em "Busca Inteligente"
+
+## Docker (Opcional)
 
 ```bash
 docker build -t mcp-server .
-docker run -p 8080:8080 --env-file .env mcp-server
+docker run -p 8080:8080 mcp-server
 ```
