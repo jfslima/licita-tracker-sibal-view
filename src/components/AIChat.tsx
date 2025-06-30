@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Send, Bot, User, Loader2, MessageSquare, X, FileText, Sparkles } from 'lucide-react';
-import { useGroqAI } from '@/hooks/useGroqAI';
+import { useMcpAI } from '@/hooks/useMcpAI';
 
 interface AIChatProps {
   isOpen: boolean;
@@ -21,8 +21,9 @@ interface AIChatProps {
 
 export function AIChat({ isOpen, onClose, documentContext }: AIChatProps) {
   const [inputMessage, setInputMessage] = useState('');
-  const { messages, isLoading, isStreaming, sendMessage, summarizeDocument, clearMessages } = useGroqAI();
+  const { messages, loading: isLoading, sendMessage, summarizeDocument, clearMessages } = useMcpAI();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const isStreaming = false; // Streaming não disponível na implementação MCP atual
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -39,9 +40,9 @@ export function AIChat({ isOpen, onClose, documentContext }: AIChatProps) {
     const message = inputMessage;
     setInputMessage('');
     
-    const context = documentContext ? 
-      `Documento: ${documentContext.title}\nTipo: ${documentContext.type}\nConteúdo: ${documentContext.text}` : 
-      undefined;
+    const context = documentContext 
+      ? `Documento: ${documentContext.title}\nTipo: ${documentContext.type}\nConteúdo: ${documentContext.text}` 
+      : undefined;
 
     await sendMessage(message, context);
   };

@@ -1,0 +1,37 @@
+# frontend-railway.toml
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npm run preview"
+restartPolicyType = "ON_FAILURE"
+numReplicas = 1
+
+[nixpacks]
+nodejs-version = "18"
+
+[[services]]
+name = "web"
+port = "3000"
+internal_port = "3000"
+protocol = "tcp"
+auto_deploy = true
+
+[services.concurrency]
+type = "connections"
+hard_limit = 25
+soft_limit = 20
+
+[[services.ports]]
+port = "3000"
+handlers = ["http"]
+force_https = true
+
+[services.http_checks]
+interval = "10s"
+timeout = "5s"
+grace_period = "5s"
+method = "GET"
+path = "/"
+protocol = "http"
