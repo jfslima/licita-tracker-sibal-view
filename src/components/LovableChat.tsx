@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,8 +32,8 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // URL do MCP Server no Railway
-  const MCP_URL = 'https://licita-tracker-sibal-view-production.up.railway.app';
+  // URL do MCP Server - agora usa a variável de ambiente
+  const MCP_URL = import.meta.env.VITE_MCP_URL || 'https://mcp-server-production.up.railway.app';
 
   useEffect(() => {
     if (isOpen) {
@@ -53,10 +52,10 @@ export function LovableChat({ isOpen, onClose, documentContext }: LovableChatPro
 
   const checkMcpConnection = async () => {
     console.log('🔍 Verificando conexão MCP no Railway...');
+    console.log(`📡 URL do MCP Server: ${MCP_URL}`);
     setConnectionStatus('checking');
     
     try {
-      console.log(`Tentando conectar em: ${MCP_URL}`);
       const response = await fetch(`${MCP_URL}/health`, {
         method: 'GET',
         headers: {
@@ -258,7 +257,7 @@ Responda sempre em português de forma educativa e prática.`;
                   Especialista em licitações com MCP + Groq AI
                 </p>
                 <p className="text-xs text-blue-200 mt-1">
-                  🚀 Railway: {MCP_URL.split('//')[1]}
+                  🚀 MCP Server: {MCP_URL.split('//')[1]}
                 </p>
               </div>
             </div>
