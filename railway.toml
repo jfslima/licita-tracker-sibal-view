@@ -13,7 +13,7 @@ name          = "mcp-server"
 root          = "packages/mcp-server"
 builder       = "nixpacks"          # usa node 18 por padrão
 pre_build     = "npm install -g pnpm && pnpm install --no-frozen-lockfile"
-buildCommand  = "npm run build"
+buildCommand  = "pnpm run build"
 startCommand  = "node dist/index.js"
 internal_port = 8080
 
@@ -33,8 +33,8 @@ name          = "frontend"
 root          = "."
 builder       = "nixpacks"
 pre_build     = "npm install -g pnpm && pnpm install --no-frozen-lockfile"
-buildCommand  = "npm run build"
-startCommand  = "npm run preview -- --port $PORT --host 0.0.0.0"
+buildCommand  = "pnpm run build"
+startCommand  = "pnpm run preview -- --port $PORT --host 0.0.0.0"
 internal_port = "$PORT"             # deixa Railway escolher
 
   [services.variables]
