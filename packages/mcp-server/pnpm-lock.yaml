@@ -1,0 +1,10 @@
+lockfileVersion: '7.0'
+
+importers:
+  .:
+    dependencies: {}
+    devDependencies: {}
+
+  packages/mcp-server:
+    dependencies: {}
+    devDependencies: {}
