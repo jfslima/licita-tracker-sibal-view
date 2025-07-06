@@ -1,0 +1,45 @@
+services:
+  # ─────────────────── FRONTEND ───────────────────
+  - name: frontend
+    type: web
+    env: static           # Render servirá arquivos de dist/
+    rootDir: .
+    buildCommand: |
+      pnpm install --recursive --frozen-lockfile
+      pnpm run build        # gera dist/
+    staticPublishPath: dist
+    plan: free              # mude depois se precisar
+    envVars:
+      - key: VITE_MCP_URL
+        fromService:
+          name: mcp-server
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: VITE_MCP_HEADER
+        value: api-key
+      - key: VITE_MCP_TOKEN
+        sync: false         # defina no painel
+      - key: VITE_LOVABLE_MODEL
+        value: meta-llama/llama-4-scout-17b-16e-instruct
+
+  # ─────────────────── BACKEND ────────────────────
+  - name: mcp-server
+    type: web
+    env: node
+    rootDir: packages/mcp-server
+    buildCommand: |
+      # garante lock à vista
+      cp ../pnpm-lock.yaml pnpm-lock.yaml
+      pnpm install --frozen-lockfile
+      pnpm run build
+    startCommand: node dist/index.js
+    autoDeploy: true
+    plan: starter          # 0.5 vCPU / 512 MB
+    healthCheckPath: /health
+    envVars:
+      - key: API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PORT          # Render injeta automaticamente, mas explícito evita confusão
+        value: 8080
