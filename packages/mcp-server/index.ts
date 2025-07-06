@@ -1,6 +1,8 @@
 import * as dotenv from 'dotenv';
-// Carrega o arquivo .env da raiz do projeto
-dotenv.config({ path: '../../.env' });
+// Carrega o arquivo .env da raiz do projeto apenas em ambiente não-produção
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: '../../.env' });
+}
 import express from 'express';
 import { createMcpServer, z } from '@modelcontextprotocol/sdk';
 import fetch from 'node-fetch';
@@ -12,6 +14,11 @@ const mcp = createMcpServer();
 
 // Middleware de CORS para permitir requisições do frontend
 app.use(cors());
+
+// Endpoint de health check para o Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Middleware de autenticação para proteger a API
 const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
