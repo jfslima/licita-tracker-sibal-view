@@ -3,6 +3,7 @@ name = "licita-tracker-sibal"
 
 [nixpacks]
 pnpm_version = "10.11.0"
+pnpm_install_args = "--no-frozen-lockfile"  # IMPORTANTE: Configure isso também no dashboard Railway
 
 [variables]              # Variáveis globais (opcional)
 GROQ_MODEL   = "meta-llama/llama-4-scout-17b-16e-instruct"
