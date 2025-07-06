@@ -1,3 +1,22 @@
+# Licita Tracker - SIBAL
+
+## Deploy no Railway
+
+```bash
+# 1. Crie variável API_KEY e GROQ_API_KEY em Project → Variables
+# 2. Clique em "New Service → Import from GitHub"
+# 3. Railway detecta dois serviços (mcp-server & frontend) via railway.toml
+# 4. Aguarde ficar 🟢 healthy
+```
+
+> Health-check do backend exposto em `/health`; frontend em `/`.
+
+## Estrutura do Projeto
+
+Este projeto é um monorepo com:
+- Frontend em Vite + React 18 na raiz do repositório
+- Backend MCP Server em Express + TypeScript no diretório `packages/mcp-server`
+
 # Welcome to your Lovable project
 
 ## Project info
