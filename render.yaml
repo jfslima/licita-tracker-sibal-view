@@ -8,7 +8,7 @@ services:
       pnpm install --recursive --frozen-lockfile
       pnpm run build        # gera dist/
     staticPublishPath: dist
-    plan: free              # mude depois se precisar
+    # O plano Free é o default quando o campo plan é omitido
     envVars:
       - key: VITE_MCP_URL
         fromService:
