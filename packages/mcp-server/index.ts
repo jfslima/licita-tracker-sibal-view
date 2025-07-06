@@ -1,9 +1,10 @@
+// Importa tipos e pacotes com suas definições de tipo
 import * as dotenv from 'dotenv';
 // Carrega o arquivo .env da raiz do projeto apenas em ambiente não-produção
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: '../../.env' });
 }
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { createMcpServer, z } from '@modelcontextprotocol/sdk';
 import fetch from 'node-fetch';
 import cors from 'cors';
@@ -16,12 +17,12 @@ const mcp = createMcpServer();
 app.use(cors());
 
 // Endpoint de health check para o Railway
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Middleware de autenticação para proteger a API
-const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const apiKey = req.headers['api-key'] || req.query.apiKey;
   const validApiKey = process.env.API_KEY || 'local-dev'; // Valor padrão para desenvolvimento local
   
@@ -35,7 +36,7 @@ const authMiddleware = (req: express.Request, res: express.Response, next: expre
 // TOOL: busca licitações por texto
 mcp.tool('search_bids',
   z.object({ query: z.string() }),
-  async ({ query }) => {
+  async ({ query }: { query: string }) => {
     const url = `https://pncp.gov.br/api/search/?q=${encodeURIComponent(query)}`;
     return (await fetch(url)).json();
   }
@@ -47,7 +48,15 @@ const groqClient = new Groq({
 });
 
 // PROXY: repassa chat ao Groq usando a biblioteca oficial
-mcp.chatCompletionProxy('groq_chat', async ({ messages, temperature = 1, max_tokens, top_p = 1, stream = false, stop = null, ...rest }) => {
+mcp.chatCompletionProxy('groq_chat', async ({ messages, temperature = 1, max_tokens, top_p = 1, stream = false, stop = null, ...rest }: { 
+  messages: Array<any>; 
+  temperature?: number; 
+  max_tokens?: number; 
+  top_p?: number; 
+  stream?: boolean; 
+  stop?: string | null; 
+  [key: string]: any;
+}) => {
   try {
     console.log('Enviando requisição ao Groq:', {
       model: process.env.GROQ_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct',
@@ -78,10 +87,10 @@ mcp.chatCompletionProxy('groq_chat', async ({ messages, temperature = 1, max_tok
 // Aplica o middleware de autenticação às rotas MCP
 app.use('/mcp', authMiddleware, mcp.router());
 
-// Rota básica para verificar se a API está funcionando
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
+// Nota: já temos um endpoint de health na linha anterior, este está comentado para evitar duplicação
+// app.get('/health', (req, res) => {
+//   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+// });
 
 // Inicializa o servidor
 const PORT = process.env.PORT ?? 8080;
