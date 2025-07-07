@@ -4,7 +4,9 @@ importers:
   .:
     dependencies: {}
     devDependencies: {}
+    specifiers: {}
 
   packages/mcp-server:
     dependencies: {}
     devDependencies: {}
+    specifiers: {}
