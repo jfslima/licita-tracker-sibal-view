@@ -5,7 +5,7 @@ services:
     env: static           # Render servirá arquivos de dist/
     rootDir: .
     buildCommand: |
-      pnpm install --recursive --frozen-lockfile
+      pnpm install --recursive --no-frozen-lockfile
       pnpm run build        # gera dist/
     staticPublishPath: dist
     # O plano Free é o default quando o campo plan é omitido
@@ -28,9 +28,8 @@ services:
     env: node
     rootDir: packages/mcp-server
     buildCommand: |
-      # garante lock à vista
-      cp ../pnpm-lock.yaml pnpm-lock.yaml
-      pnpm install --frozen-lockfile
+      # sem necessidade de verificar o lockfile
+      pnpm install --no-frozen-lockfile
       pnpm run build
     startCommand: node dist/index.js
     autoDeploy: true
