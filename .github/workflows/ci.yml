@@ -23,9 +23,5 @@ jobs:
       - name: Build
         run: pnpm -r --filter ./... run build
 
-      - name: Deploy to Railway
-        uses: railwayapp/railway-up@v2
-        with:
-          service: all        # lê o railway.toml
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      # Deploy automático pelo Render Blueprint
+      # Não é mais necessário fazer deploy manual via GitHub Actions
