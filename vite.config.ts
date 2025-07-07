@@ -15,8 +15,11 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    // Configuração do lovable-tagger apenas para desenvolvimento
+    mode === 'development' && componentTagger({
+      // Adicionar opções seguras para o componentTagger
+      disableOnError: true, // Não falha o build se ocorrer um erro
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {

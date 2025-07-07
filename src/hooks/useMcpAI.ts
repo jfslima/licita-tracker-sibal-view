@@ -22,23 +22,36 @@ interface ChatRequest {
 // Implementação simplificada de cliente MCP usando fetch
 const mcpClient = {
   async chat(request: ChatRequest): Promise<MCPResponse> {
-    const response = await fetch(import.meta.env.VITE_MCP_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        [import.meta.env.VITE_MCP_HEADER]: import.meta.env.VITE_MCP_TOKEN
-      },
-      body: JSON.stringify({
-        type: "chat",
-        arguments: request
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Erro na comunicação com MCP: ${response.status}`);
+    try {
+      // Verificar se o modelo está em formato válido
+      if (!request.model) {
+        console.warn("Modelo não especificado, usando modelo padrão");
+        request.model = "meta-llama/llama-4-scout-17b-16e-instruct";
+      }
+      
+      const response = await fetch(import.meta.env.VITE_MCP_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          [import.meta.env.VITE_MCP_HEADER]: import.meta.env.VITE_MCP_TOKEN
+        },
+        body: JSON.stringify({
+          type: "chat",
+          arguments: request
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Detalhes do erro MCP:", errorText);
+        throw new Error(`Erro na comunicação com MCP: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Erro na requisição MCP:", error);
+      throw error;
     }
-    
-    return await response.json();
   }
 };
 
@@ -81,8 +94,10 @@ Responda de forma clara, objetiva e sempre baseada na legislação brasileira at
         { role: 'user', content: content }
       ];
 
+      const modelName = import.meta.env.VITE_LOVABLE_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
+      
       const res = await mcpClient.chat({
-        model: import.meta.env.VITE_LOVABLE_MODEL,
+        model: modelName,
         messages: mcpMessages
       });
 
