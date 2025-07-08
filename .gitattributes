@@ -1,0 +1,5 @@
+*.yaml text eol=lf
+*.yml text eol=lf
+pnpm-lock.yaml text eol=lf
+.prettierignore text eol=lf
+.editorconfig text eol=lf
