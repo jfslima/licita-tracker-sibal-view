@@ -13,7 +13,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "prepare": "husky install",
+    "prepare": "pnpm exec husky install || exit 0",
     "preview": "vite preview --host 0.0.0.0 --port $PORT"
   },
   "dependencies": {
