@@ -13,7 +13,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "prepare": "pnpm exec husky install || exit 0",
+    "prepare": "pnpm exec husky install",
     "preview": "vite preview --host 0.0.0.0 --port $PORT"
   },
   "dependencies": {
@@ -80,6 +80,7 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
+    "husky": "^9.1.7",
     "lovable-tagger": "^1.1.7",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",
