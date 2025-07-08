@@ -1,0 +1,11 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Verifica se o pnpm-lock.yaml tem quebras de linha
+if [ -f "pnpm-lock.yaml" ]; then
+  LINE_COUNT=$(grep -c . pnpm-lock.yaml || echo "0")
+  if [ "$LINE_COUNT" -lt 2 ]; then
+    echo "ERRO: pnpm-lock.yaml está em uma única linha! Corrija antes de commitar."
+    exit 1
+  fi
+fi
