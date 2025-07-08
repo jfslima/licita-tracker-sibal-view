@@ -3,7 +3,7 @@ name = "licita-tracker-sibal"
 
 [nixpacks]
 pnpm_version = "8.15.1"
-pnpm_install_args = "--frozen-lockfile"  # Usamos versão fixa do pnpm para garantir compatibilidade
+pnpm_install_args = "--no-frozen-lockfile"  # Desabilitamos o frozen-lockfile para resolver problemas de compatibilidade
 
 [variables]              # Variáveis globais (opcional)
 GROQ_MODEL   = "meta-llama/llama-4-scout-17b-16e-instruct"
@@ -13,7 +13,7 @@ GROQ_MODEL   = "meta-llama/llama-4-scout-17b-16e-instruct"
 name          = "mcp-server"
 root          = "packages/mcp-server"
 builder       = "nixpacks"          # usa node 18 por padrão
-pre_build     = "npm install -g pnpm@8.15.1 && pnpm install --frozen-lockfile"
+pre_build     = "npm install -g pnpm@8.15.1 && pnpm install --no-frozen-lockfile"
 buildCommand  = "pnpm run build"
 startCommand  = "node dist/index.js"
 internal_port = 8080
@@ -33,7 +33,7 @@ internal_port = 8080
 name          = "frontend"
 root          = "."
 builder       = "nixpacks"
-pre_build     = "npm install -g pnpm@8.15.1 && pnpm install --frozen-lockfile"
+pre_build     = "npm install -g pnpm@8.15.1 && pnpm install --no-frozen-lockfile"
 buildCommand  = "pnpm run build"
 startCommand  = "pnpm run preview -- --port $PORT --host 0.0.0.0"
 internal_port = "$PORT"             # deixa Railway escolher
