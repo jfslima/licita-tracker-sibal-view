@@ -1,6 +1,3 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
 # Verifica se o pnpm-lock.yaml tem quebras de linha
 if [ -f "pnpm-lock.yaml" ]; then
   LINE_COUNT=$(grep -c . pnpm-lock.yaml || echo "0")
