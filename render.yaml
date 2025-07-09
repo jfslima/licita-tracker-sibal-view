@@ -1,0 +1,49 @@
+
+services:
+  # Backend MCP Server
+  - type: web
+    name: mcp-server
+    runtime: node
+    region: oregon
+    plan: starter
+    buildCommand: cd packages/mcp-server && npm install && npm run build
+    startCommand: cd packages/mcp-server && npm start
+    rootDir: packages/mcp-server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: API_KEY
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: meta-llama/llama-4-scout-17b-16e-instruct
+    healthCheckPath: /health
+
+  # Frontend React
+  - type: web
+    name: frontend
+    runtime: node
+    region: oregon
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --port $PORT --host 0.0.0.0
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VITE_MCP_URL
+        fromService:
+          type: web
+          name: mcp-server
+          property: host
+      - key: VITE_MCP_HEADER
+        value: api-key
+      - key: VITE_MCP_TOKEN
+        fromService:
+          type: web
+          name: mcp-server
+          envVarKey: API_KEY
+      - key: VITE_LOVABLE_MODEL
+        value: meta-llama/llama-4-scout-17b-16e-instruct

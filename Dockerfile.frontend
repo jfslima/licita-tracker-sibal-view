@@ -1,0 +1,47 @@
+
+# Dockerfile para o Frontend no Render
+FROM node:18-alpine AS base
+
+# Instalar dependências do sistema
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copiar package files
+COPY package*.json ./
+COPY vite.config.ts ./
+COPY tsconfig*.json ./
+
+# Instalar dependências
+RUN npm ci
+
+# Copiar código fonte
+COPY . .
+
+# Build da aplicação
+RUN npm run build
+
+# Etapa de produção com servidor de preview
+FROM node:18-alpine AS production
+WORKDIR /app
+
+# Copiar arquivos necessários
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/dist ./dist
+COPY --from=base /app/package.json ./package.json
+COPY --from=base /app/vite.config.ts ./vite.config.ts
+
+# Criar usuário não-root
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+USER nodejs
+
+# Expor porta (Render usa variável PORT)
+EXPOSE $PORT
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:' + process.env.PORT, (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
+# Comando de inicialização
+CMD ["npm", "run", "preview", "--", "--port", "$PORT", "--host", "0.0.0.0"]
