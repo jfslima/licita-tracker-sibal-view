@@ -8,7 +8,6 @@ services:
     plan: starter
     buildCommand: cd packages/mcp-server && npm install && npm run build
     startCommand: cd packages/mcp-server && npm start
-    rootDir: packages/mcp-server
     envVars:
       - key: NODE_ENV
         value: production

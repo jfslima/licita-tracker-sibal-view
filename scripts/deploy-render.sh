@@ -28,7 +28,7 @@ fi
 # Fazer push das mudanças
 echo "📤 Fazendo push das mudanças..."
 git add .
-git commit -m "Deploy: Configuração para Render $(date '+%Y-%m-%d %H:%M:%S')" || echo "Nenhuma mudança para commitar"
+git commit -m "Deploy: Configuração corrigida para Render $(date '+%Y-%m-%d %H:%M:%S')" || echo "Nenhuma mudança para commitar"
 git push origin main || git push origin master
 
 echo "✅ Deploy preparado!"
@@ -43,5 +43,9 @@ echo "   - API_KEY: será gerada automaticamente"
 echo "5. Clique em 'Apply' para fazer o deploy"
 echo ""
 echo "🔗 URLs após o deploy:"
-echo "   - Backend: https://[nome-do-mcp-server].onrender.com"
-echo "   - Frontend: https://[nome-do-frontend].onrender.com"
+echo "   - Backend: https://mcp-server.onrender.com"
+echo "   - Frontend: https://frontend.onrender.com"
+echo ""
+echo "🔧 Comandos de build corretos:"
+echo "   - Backend: cd packages/mcp-server && npm install && npm run build"
+echo "   - Frontend: npm install && npm run build"
