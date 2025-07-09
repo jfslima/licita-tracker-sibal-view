@@ -5,7 +5,7 @@ if (process.env.NODE_ENV !== 'production') {
   dotenv.config({ path: '../../.env' });
 }
 import express, { Request, Response, NextFunction } from 'express';
-import { createMcpServer, z } from '@modelcontextprotocol/sdk';
+import { createMcpServer, z } from '@modelcontextprotocol/sdk/dist/esm/server/index.js';
 import fetch from 'node-fetch';
 import cors from 'cors';
 import { Groq } from 'groq';
