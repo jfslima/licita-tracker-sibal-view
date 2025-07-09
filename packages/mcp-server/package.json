@@ -2,6 +2,7 @@
   "name": "mcp-server",
   "version": "1.0.0",
   "description": "MCP Server for licita-tracker-sibal-view",
+  "type": "module",
   "main": "index.ts",
   "scripts": {
     "dev": "tsx index.ts",
