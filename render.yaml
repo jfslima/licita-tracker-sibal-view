@@ -6,19 +6,19 @@ services:
     runtime: node
     region: oregon
     plan: starter
-    buildCommand: cd packages/mcp-server && npm install && npm run build
-    startCommand: cd packages/mcp-server && npm start
+    buildCommand: cd src/backend && npm install && npm run build
+    startCommand: cd src/backend && npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000
-      - key: API_KEY
-        generateValue: true
+        value: 3000
+      - key: DATABASE_URL
+        sync: false
       - key: GROQ_API_KEY
         sync: false
-      - key: GROQ_MODEL
-        value: meta-llama/llama-4-scout-17b-16e-instruct
+      - key: JWT_SECRET
+        generateValue: true
     healthCheckPath: /health
 
   # Frontend React
@@ -37,12 +37,3 @@ services:
           type: web
           name: mcp-server
           property: host
-      - key: VITE_MCP_HEADER
-        value: api-key
-      - key: VITE_MCP_TOKEN
-        fromService:
-          type: web
-          name: mcp-server
-          envVarKey: API_KEY
-      - key: VITE_LOVABLE_MODEL
-        value: meta-llama/llama-4-scout-17b-16e-instruct
