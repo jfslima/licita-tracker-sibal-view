@@ -28,7 +28,7 @@ fi
 # Fazer push das mudanças
 echo "📤 Fazendo push das mudanças..."
 git add .
-git commit -m "Deploy: Configuração atualizada para Render $(date '+%Y-%m-%d %H:%M:%S')" || echo "Nenhuma mudança para commitar"
+git commit -m "Deploy: Configuração corrigida para Render $(date '+%Y-%m-%d %H:%M:%S')" || echo "Nenhuma mudança para commitar"
 git push origin main || git push origin master
 
 echo "✅ Deploy preparado!"
@@ -52,13 +52,13 @@ echo "   - Frontend está na raiz do projeto"
 echo "   - Comando de build backend: npm install && cd src/backend && npx tsc"
 echo "   - Comando de build frontend: npm install && npm run build"
 echo ""
-echo "📋 Checklist:"
-echo "   ✓ render.yaml configurado"
-echo "   ✓ Backend em src/backend/"
-echo "   ✓ Dependências do backend instaladas"
-echo "   ✓ TypeScript configurado"
+echo "✅ CORREÇÕES APLICADAS:"
+echo "   - Configurado como Web Service (não Static Site)"
+echo "   - Apontando para src/backend/ (estrutura correta)"
+echo "   - Usando npm ao invés de pnpm/workspace"
+echo "   - JWT_SECRET será gerado automaticamente"
 echo ""
 echo "⚠️  IMPORTANTE:"
 echo "   - Configure GROQ_API_KEY no painel do Render"
 echo "   - DATABASE_URL é opcional (usado apenas se tiver Prisma)"
-echo "   - JWT_SECRET será gerado automaticamente"
+echo "   - Os serviços agora são Web Service, não Static Site"
