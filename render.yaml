@@ -1,5 +1,4 @@
 
-
 services:
   # Backend MCP Server
   - type: web
@@ -39,4 +38,3 @@ services:
           type: web
           name: mcp-server
           property: host
-

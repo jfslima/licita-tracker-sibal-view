@@ -1,92 +1,102 @@
-# Licita Tracker - SIBAL
 
-## Deploy no Railway
+# 🏛️ SIBAL Licita Tracker
+
+Sistema inteligente para análise e acompanhamento de licitações com IA avançada.
+
+## 🚨 SETUP OBRIGATÓRIO
+
+**IMPORTANTE**: Este projeto estava com problemas críticos de estrutura e dependências. Execute o setup antes de usar:
 
 ```bash
-# 1. Crie variável API_KEY e GROQ_API_KEY em Project → Variables
-# 2. Clique em "New Service → Import from GitHub"
-# 3. Railway detecta dois serviços (mcp-server & frontend) via railway.toml
-# 4. Aguarde ficar 🟢 healthy
-```
+# 1. Clone o repositório
+git clone <seu-repositorio>
+cd licita-tracker-sibal-view
 
-> Health-check do backend exposto em `/health`; frontend em `/`.
+# 2. Execute o setup automático
+chmod +x scripts/setup-project.sh
+./scripts/setup-project.sh
 
-## Estrutura do Projeto
-
-Este projeto é um monorepo com:
-- Frontend em Vite + React 18 na raiz do repositório
-- Backend MCP Server em Express + TypeScript no diretório `packages/mcp-server`
-
-# Welcome to your Lovable project
-
-## Project info
-
-**URL**: https://lovable.dev/projects/071c24f8-d369-4b32-97a1-261111a8a94e
-
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/071c24f8-d369-4b32-97a1-261111a8a94e) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. Inicie o desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🏗️ Arquitetura
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+licita-tracker-sibal-view/
+├── src/
+│   ├── backend/           # 🔧 MCP Server (Node.js + TypeScript)
+│   │   ├── src/index.ts   # Servidor principal
+│   │   ├── package.json   # Dependências do backend
+│   │   └── tsconfig.json  # Config TypeScript
+│   ├── components/        # ⚛️ Componentes React
+│   ├── hooks/            # 🪝 Hooks personalizados  
+│   └── pages/            # 📄 Páginas da aplicação
+├── render.yaml           # 🚀 Config deploy Render
+└── package.json          # 📦 Dependências principais
+```
 
-**Use GitHub Codespaces**
+## 🚀 Deploy no Render
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Após executar o setup local:
 
-## What technologies are used for this project?
+1. **Commit das correções**:
+```bash
+git add .
+git commit -m "Fix: Setup completo do projeto"
+git push
+```
 
-This project is built with:
+2. **Deploy via Blueprint**:
+   - Vá para [render.com](https://render.com)
+   - **New +** → **Blueprint**
+   - Conecte seu repositório GitHub
+   - Configure `GROQ_API_KEY` no painel
+   - Deploy automático!
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🔧 Tecnologias
 
-## How can I deploy this project?
+- **Frontend**: React 18 + Vite + TypeScript + Tailwind CSS + shadcn/ui
+- **Backend**: Node.js + TypeScript + Fastify + MCP Protocol
+- **IA**: Groq API (Meta Llama)
+- **Deploy**: Render (via Blueprint)
+- **Monitoramento**: Health checks automáticos
 
-Simply open [Lovable](https://lovable.dev/projects/071c24f8-d369-4b32-97a1-261111a8a94e) and click on Share -> Publish.
+## 📊 Funcionalidades
 
-## Can I connect a custom domain to my Lovable project?
+- 🤖 **Chat IA Avançado** - Análise inteligente de licitações
+- 🔍 **Busca Semântica** - Encontre licitações similares
+- 📈 **Dashboard Analytics** - Métricas e insights
+- 🏛️ **Integração SIBAL** - Dados oficiais do governo
+- 📋 **Análise de Viabilidade** - IA avalia adequação da empresa
+- 💼 **Gestão de Propostas** - Acompanhamento completo
 
-Yes, you can!
+## 🔗 Links Úteis
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- [Documentação Render](https://render.com/docs/blueprint-spec)
+- [Setup Troubleshooting](./docs/SETUP.md)
+- [Deploy Guide](./docs/RENDER_DEPLOYMENT.md)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## ⚡ Desenvolvimento
+
+```bash
+# Frontend (desenvolvimento)
+npm run dev
+
+# Backend (desenvolvimento) 
+cd src/backend && npm run dev
+
+# Build completo
+npm run build && cd src/backend && npm run build
+```
+
+## 📞 Suporte
+
+Se encontrar problemas:
+1. Verifique se executou `scripts/setup-project.sh`
+2. Confirme que `package-lock.json` existe na raiz
+3. Consulte `docs/SETUP.md` para detalhes
+
+---
+
+**Projeto desenvolvido com Lovable AI + Render Platform**
