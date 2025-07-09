@@ -38,8 +38,8 @@ Durante o setup do Blueprint, configure:
 # Obrigatório - Sua chave da API Groq
 GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxx
 
-# Opcional - Modelo a ser usado (já tem padrão)
-GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
+# Opcional - URL do banco de dados (se usar Prisma)
+DATABASE_URL=postgresql://user:password@host:port/database
 ```
 
 ### 4. Aplicar o Blueprint
@@ -48,37 +48,42 @@ GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
 2. Clique em **"Apply"**
 3. Aguarde o deploy (5-10 minutos)
 
-## 🔧 Deploy Manual (Alternativo)
+## 🏗️ Estrutura do Projeto
 
-Se preferir fazer deploy manual de cada serviço:
+```
+licita-tracker-sibal-view/
+├── src/
+│   ├── backend/           # Servidor MCP
+│   │   ├── src/
+│   │   │   └── index.ts   # Servidor principal
+│   │   ├── dist/          # Código compilado
+│   │   └── tsconfig.json  # Config TypeScript
+│   ├── components/        # Componentes React
+│   ├── hooks/            # Hooks personalizados
+│   └── ...
+├── render.yaml           # Configuração do Render
+└── package.json          # Dependências principais
+```
+
+## 🔧 Comandos de Build
 
 ### Backend (MCP Server)
+```bash
+# Build
+npm install && cd src/backend && npx tsc
 
-1. **New +** → **Web Service**
-2. **Build Command**: `cd packages/mcp-server && npm install && npm run build`
-3. **Start Command**: `cd packages/mcp-server && npm start`
-4. **Environment Variables**:
-   ```
-   NODE_ENV=production
-   PORT=10000
-   API_KEY=[gerado automaticamente]
-   GROQ_API_KEY=[sua chave]
-   GROQ_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
-   ```
+# Start
+cd src/backend && node dist/index.js
+```
 
 ### Frontend
+```bash
+# Build
+npm install && npm run build
 
-1. **New +** → **Web Service**
-2. **Build Command**: `npm install && npm run build`
-3. **Start Command**: `npm run preview -- --port $PORT --host 0.0.0.0`
-4. **Environment Variables**:
-   ```
-   NODE_ENV=production
-   VITE_MCP_URL=https://[backend-url].onrender.com/mcp
-   VITE_MCP_HEADER=api-key
-   VITE_MCP_TOKEN=[mesmo valor de API_KEY do backend]
-   VITE_LOVABLE_MODEL=meta-llama/llama-4-scout-17b-16e-instruct
-   ```
+# Start (modo preview)
+npm run preview -- --port $PORT --host 0.0.0.0
+```
 
 ## 🏥 Verificação de Saúde
 
@@ -86,24 +91,29 @@ Após o deploy, verifique:
 
 - **Backend Health**: `https://[backend-url].onrender.com/health`
 - **Frontend**: `https://[frontend-url].onrender.com`
+- **MCP Endpoint**: `https://[backend-url].onrender.com/mcp`
 
 ## 🔍 Troubleshooting
 
 ### Erro: "Build failed"
-- Verifique se o `package.json` está correto
-- Confirme se todas as dependências estão listadas
+- Verifique se `src/backend/` existe
+- Confirme se `tsconfig.json` está correto no backend
+- Verifique se todas as dependências estão no `package.json` principal
 
 ### Erro: "Service unhealthy"
 - Verifique os logs no painel do Render
-- Confirme se as variáveis de ambiente estão configuradas
+- Confirme se `GROQ_API_KEY` está configurada
+- Teste o endpoint `/health` diretamente
 
-### Erro: "CORS"
-- Verifique se o backend está configurado para aceitar requests do frontend
-- Confirme a URL do backend no frontend
+### Erro: "Cannot find module"
+- Verifique se as dependências do backend estão instaladas
+- Confirme se o TypeScript está compilando corretamente
+- Verifique imports relativos vs absolutos
 
 ### Frontend não carrega dados
 - Verifique se `VITE_MCP_URL` aponta para o backend correto
-- Confirme se `VITE_MCP_TOKEN` tem o mesmo valor de `API_KEY` do backend
+- Confirme se o backend está respondendo em `/mcp`
+- Verifique CORS se necessário
 
 ## 📊 Monitoramento
 
@@ -124,3 +134,4 @@ O Render oferece:
 - [Documentação do Render](https://render.com/docs)
 - [Blueprint Reference](https://render.com/docs/blueprint-spec)
 - [Environment Variables](https://render.com/docs/environment-variables)
+- [Troubleshooting Deploys](https://render.com/docs/troubleshooting-deploys)
