@@ -28,7 +28,7 @@ services:
     runtime: node
     region: oregon
     plan: starter
-    buildCommand: npm install --legacy-peer-deps && npm run build
+    buildCommand: npm install --legacy-peer-deps && chmod +x scripts/fix-build.sh && ./scripts/fix-build.sh
     startCommand: npm run preview -- --port $PORT --host 0.0.0.0
     envVars:
       - key: NODE_ENV
