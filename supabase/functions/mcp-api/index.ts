@@ -71,6 +71,8 @@ const tools = {
 
   async analizarLicitacao(params: { id: string; texto: string }) {
     try {
+      console.log('Analyzing licitacao:', params.id)
+      
       // Chamar Groq API para análise
       const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -96,6 +98,8 @@ const tools = {
       })
 
       if (!groqResponse.ok) {
+        const errorText = await groqResponse.text()
+        console.error('Groq API error:', groqResponse.status, errorText)
         throw new Error(`Groq API error: ${groqResponse.status}`)
       }
 
@@ -110,9 +114,14 @@ const tools = {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error:', error)
+        throw error
+      }
+      
       return data
     } catch (error) {
+      console.error('Error in analizarLicitacao:', error)
       throw new Error(`Erro na análise IA: ${error.message}`)
     }
   }
