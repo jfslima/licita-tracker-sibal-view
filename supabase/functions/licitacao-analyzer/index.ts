@@ -18,15 +18,52 @@ serve(async (req) => {
   }
 
   try {
-    const { action, data } = await req.json().catch(() => ({ action: null, data: null }));
+    console.log('Licitacao Analyzer - Received request:', req.method)
+    
+    let requestBody
+    try {
+      requestBody = await req.json()
+    } catch (error) {
+      console.error('Error parsing JSON:', error)
+      return new Response(JSON.stringify({
+        error: 'Invalid JSON in request body'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    const { action, data } = requestBody || {}
+    console.log('Action:', action, 'Data:', data)
+
+    if (!action) {
+      return new Response(JSON.stringify({
+        error: 'Missing action parameter'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
 
     switch (action) {
       case 'analyze_batch':
-        // Processar lote de licitações
+        console.log('Starting batch analysis')
+        
+        if (!data || !data.licitacoes || !Array.isArray(data.licitacoes)) {
+          return new Response(JSON.stringify({
+            error: 'Invalid data format for batch analysis'
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          })
+        }
+
         const results = []
         
         for (const licitacao of data.licitacoes) {
           try {
+            console.log('Analyzing licitacao:', licitacao.id)
+            
             const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
               method: 'POST',
               headers: {
@@ -67,9 +104,14 @@ serve(async (req) => {
               let analiseIA
               
               try {
-                analiseIA = JSON.parse(groqData.choices[0].message.content)
-              } catch {
-                analiseIA = { resumo_executivo: groqData.choices[0].message.content }
+                const aiContent = groqData.choices[0].message.content
+                analiseIA = JSON.parse(aiContent)
+              } catch (parseError) {
+                console.log('JSON parse failed, using raw content')
+                analiseIA = { 
+                  resumo_executivo: groqData.choices[0].message.content,
+                  score_viabilidade: 50
+                }
               }
 
               // Atualizar no banco
@@ -81,6 +123,10 @@ serve(async (req) => {
                 })
                 .eq('id', licitacao.id)
 
+              if (error) {
+                console.error('Database update error:', error)
+              }
+
               results.push({
                 id: licitacao.id,
                 status: 'success',
@@ -88,13 +134,15 @@ serve(async (req) => {
                 error: error?.message
               })
             } else {
+              console.error('Groq API error:', groqResponse.status, await groqResponse.text())
               results.push({
                 id: licitacao.id,
                 status: 'error',
-                error: 'Falha na API Groq'
+                error: `Groq API error: ${groqResponse.status}`
               })
             }
           } catch (error) {
+            console.error('Error processing licitacao:', licitacao.id, error)
             results.push({
               id: licitacao.id,
               status: 'error',
@@ -112,24 +160,28 @@ serve(async (req) => {
         })
 
       case 'get_stats':
-        // Estatísticas das licitações
+        console.log('Getting stats')
+        
         const { data: stats, error } = await supabase
           .from('licitacoes')
           .select('resumo_ia, valor, criado_em')
           .not('resumo_ia', 'is', null)
 
-        if (error) throw error
+        if (error) {
+          console.error('Database error:', error)
+          throw error
+        }
 
-        const totalAnalisadas = stats.length
-        const valorTotal = stats.reduce((sum, item) => {
+        const totalAnalisadas = stats?.length || 0
+        const valorTotal = stats?.reduce((sum, item) => {
           const val = parseFloat(item.valor || 0)
           return sum + (isNaN(val) ? 0 : val)
-        }, 0)
+        }, 0) || 0
 
         return new Response(JSON.stringify({
           total_analisadas: totalAnalisadas,
           valor_total_estimado: valorTotal,
-          media_por_dia: totalAnalisadas / 30, // Últimos 30 dias
+          media_por_dia: totalAnalisadas / 30,
           ultima_atualizacao: new Date().toISOString()
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -137,7 +189,7 @@ serve(async (req) => {
 
       default:
         return new Response(JSON.stringify({
-          error: 'Ação não reconhecida'
+          error: `Unknown action: ${action}`
         }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -147,7 +199,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Analyzer Error:', error)
     return new Response(JSON.stringify({
-      error: error.message
+      error: error.message || 'Internal server error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
