@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { Dashboard } from '@/components/Dashboard';
-import { LicitacaoSystem } from '@/components/LicitacaoSystem';
+import { LicitacaoMcpDashboard } from '@/components/LicitacaoMcpDashboard';
 import { PricingSection } from '@/components/PricingSection';
 import { Footer } from '@/components/Footer';
 import { Toaster } from '@/components/ui/toaster';
@@ -45,7 +45,7 @@ function App() {
       case 'licitacoes':
         return (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <LicitacaoSystem />
+            <LicitacaoMcpDashboard />
           </div>
         );
       case 'precos':
@@ -77,7 +77,7 @@ function App() {
           <>
             <Hero />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              <LicitacaoSystem />
+              <LicitacaoMcpDashboard />
             </div>
             <PricingSection />
           </>

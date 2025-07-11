@@ -18,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, data } = await req.json()
+    const { action, data } = await req.json().catch(() => ({ action: null, data: null }));
 
     switch (action) {
       case 'analyze_batch':
