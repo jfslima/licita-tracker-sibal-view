@@ -1,0 +1,23 @@
+project_id = "ngcfavdkmlfjvcqjqftj"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+security_update_password_require_reauthentication = true
+enable_signup = true
+
+[functions.mcp-api]
+verify_jwt = false
+
+[functions.licitacao-analyzer]
+verify_jwt = false
