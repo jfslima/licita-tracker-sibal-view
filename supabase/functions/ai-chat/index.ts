@@ -24,7 +24,7 @@ serve(async (req) => {
   try {
     console.log('AI Chat request received')
     
-    const { messages, model = 'llama-3.1-70b-versatile' }: ChatRequest = await req.json()
+    const { messages, model = 'llama-3.1-8b-instant' }: ChatRequest = await req.json()
 
     if (!messages || !Array.isArray(messages)) {
       throw new Error('Messages array is required')
