@@ -17,13 +17,21 @@ interface AIChatProps {
     type: string;
     title: string;
   };
+  autoSendMessage?: string;
 }
 
-export function AIChat({ isOpen, onClose, documentContext }: AIChatProps) {
+export function AIChat({ isOpen, onClose, documentContext, autoSendMessage }: AIChatProps) {
   const [inputMessage, setInputMessage] = useState('');
   const { messages, loading: isLoading, sendMessage, summarizeDocument, clearMessages } = useMcpAI();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isStreaming = false; // Streaming não disponível na implementação MCP atual
+
+  // Auto-send message when provided
+  useEffect(() => {
+    if (autoSendMessage && isOpen) {
+      sendMessage(autoSendMessage);
+    }
+  }, [autoSendMessage, isOpen, sendMessage]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
