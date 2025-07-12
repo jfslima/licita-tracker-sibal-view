@@ -56,10 +56,10 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: model,
-        messages: messages,
-        max_tokens: 2024,
+        messages: messages.slice(-10), // Limitar a 10 mensagens mais recentes
+        max_tokens: 1024, // Reduzir max_tokens
         temperature: 0.2,
-        top_p: 1,
+        top_p: 0.9, // Ajustar top_p
         stream: false
       }),
     })
