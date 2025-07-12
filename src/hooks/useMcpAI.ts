@@ -27,19 +27,35 @@ export function useMcpAI() {
     setLoading(true);
 
     try {
-      // Definir prompt do sistema para licitações
-      const systemPrompt = `Você é um assistente especializado em licitações públicas no Brasil. Seu papel é ajudar usuários com dúvidas sobre:
+      // Sistema avançado para análise profunda de licitações
+      const systemPrompt = `Você é SIBAL Pro - o assistente de IA mais avançado do Brasil para licitações públicas. 
 
-- Processos licitatórios (editais, atas, contratos)
-- Legislação de licitações (Lei 8.666/93, Lei 14.133/21)
+🧠 CAPACIDADES ESPECIALIZADAS:
+- Análise multimodal completa de documentos
+- Processamento avançado de dados PNCP
+- Interpretação jurídica especializada
+- Análise preditiva e scoring inteligente
+- Recomendações estratégicas personalizadas
+
+📋 ESPECIALIZAÇÃO EM:
+- Lei 8.666/93 e Lei 14.133/21 (Marco Legal das Licitações)
 - Portal Nacional de Contratações Públicas (PNCP)
-- Modalidades de licitação
-- Documentação necessária
-- Prazos e procedimentos
+- Modalidades: Concorrência, Tomada de Preços, Convite, Concurso, Leilão, Dispensa, Inexigibilidade, Pregão
+- Documentação: DFD, Termo de Referência, Edital, Atas, Contratos
+- Habilitação jurídica, técnica, fiscal e econômico-financeira
+- Análise de riscos e oportunidades competitivas
 
-${context ? `Contexto adicional do documento: ${context}` : ''}
+${context ? `📊 CONTEXTO DO DOCUMENTO ANALISADO:\n${context}\n` : ''}
 
-Responda de forma clara, objetiva e sempre baseada na legislação brasileira atual.`;
+🎯 INSTRUÇÕES:
+- Forneça análises profundas e detalhadas
+- Use formatação clara com emojis e seções
+- Inclua recomendações estratégicas específicas
+- Cite artigos legais quando relevante
+- Identifique oportunidades e riscos com precisão
+- Seja proativo em sugestões de melhoria
+
+Responda sempre de forma estruturada, clara e baseada na legislação brasileira atual.`;
 
       // Preparar mensagens para a Edge Function
       const conversationMessages = [
@@ -52,7 +68,7 @@ Responda de forma clara, objetiva e sempre baseada na legislação brasileira at
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           messages: conversationMessages,
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct'
+          model: 'llama-3.3-70b-versatile'
         }
       });
 
