@@ -30,6 +30,9 @@ serve(async (req) => {
       throw new Error('Messages array is required')
     }
 
+    // Log da requisição para debug
+    console.log('Request received with model:', model, 'messages count:', messages.length)
+
     // Verificar se a GROQ_API_KEY está configurada
     const groqApiKey = Deno.env.get('GROQ_API_KEY')
     if (!groqApiKey) {
@@ -39,37 +42,64 @@ serve(async (req) => {
         success: false,
         requiresApiKey: true
       }), {
-        status: 200, // Mudando para 200 para evitar erro no cliente
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    console.log('Calling Groq API with model:', model)
-    console.log('Messages count:', messages.length)
+    // Filtrar e validar mensagens
+    const filteredMessages = messages
+      .filter(msg => msg && msg.role && msg.content)
+      .slice(-6) // Limitar a 6 mensagens mais recentes
+      .map(msg => ({
+        role: msg.role,
+        content: String(msg.content).substring(0, 3000) // Limitar conteúdo
+      }))
 
-    // Chamar Groq API com tratamento robusto de erros
+    console.log('Filtered messages count:', filteredMessages.length)
+
+    // Validar se há mensagens suficientes
+    if (filteredMessages.length === 0) {
+      return new Response(JSON.stringify({
+        error: 'Nenhuma mensagem válida encontrada.',
+        success: false
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    const requestBody = {
+      model: model,
+      messages: filteredMessages,
+      max_tokens: 500,
+      temperature: 0.1,
+      top_p: 0.9,
+      stream: false
+    }
+
+    console.log('Sending request to Groq API...')
+
+    // Chamar Groq API
     const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: model,
-        messages: messages.slice(-10), // Limitar a 10 mensagens mais recentes
-        max_tokens: 1024, // Reduzir max_tokens
-        temperature: 0.2,
-        top_p: 0.9, // Ajustar top_p
-        stream: false
-      }),
+      body: JSON.stringify(requestBody),
     })
+
+    console.log('Groq API response status:', groqResponse.status)
 
     if (!groqResponse.ok) {
       const errorText = await groqResponse.text()
-      console.error('Groq API error:', groqResponse.status, errorText)
+      console.error('Groq API error details:', errorText)
       
       let errorMessage = `Erro Groq API: ${groqResponse.status}`
-      if (groqResponse.status === 401) {
+      if (groqResponse.status === 400) {
+        errorMessage = 'Requisição inválida para a API Groq. Verifique os parâmetros.'
+      } else if (groqResponse.status === 401) {
         errorMessage = 'Chave API Groq inválida. Verifique a configuração.'
       } else if (groqResponse.status === 429) {
         errorMessage = 'Limite de rate excedido. Aguarde alguns segundos.'
@@ -82,7 +112,7 @@ serve(async (req) => {
         success: false,
         details: errorText
       }), {
-        status: 200, // Mudando para 200 para evitar erro no cliente
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -96,7 +126,7 @@ serve(async (req) => {
         error: 'Resposta vazia da IA. Tente reformular sua pergunta.',
         success: false
       }), {
-        status: 200, // Mudando para 200 para evitar erro no cliente
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -108,7 +138,7 @@ serve(async (req) => {
         error: 'Conteúdo vazio na resposta da IA.',
         success: false
       }), {
-        status: 200, // Mudando para 200 para evitar erro no cliente
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -133,7 +163,7 @@ serve(async (req) => {
       success: false,
       timestamp: new Date().toISOString()
     }), {
-      status: 200, // Mudando para 200 para evitar erro no cliente
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
