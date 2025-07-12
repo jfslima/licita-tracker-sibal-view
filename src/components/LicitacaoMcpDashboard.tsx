@@ -101,21 +101,46 @@ export function LicitacaoMcpDashboard() {
     // Abrir chat e enviar análise automática para IA
     setShowAIChat(true);
     
-    // Preparar contexto da licitação para IA
-    const contexto = `Analise esta licitação:
-    
-Objeto: ${licitacao.objeto}
-Órgão: ${licitacao.orgao_nome}
-Modalidade: ${licitacao.modalidade_licitacao_nome}
-Valor: ${licitacao.valor_global ? `R$ ${new Intl.NumberFormat('pt-BR').format(licitacao.valor_global)}` : 'Não informado'}
-Data de publicação: ${new Date(licitacao.data_publicacao_pncp).toLocaleDateString('pt-BR')}
+    // Preparar contexto avançado da licitação para IA
+    const contexto = `🏛️ LICITAÇÃO PARA ANÁLISE PROFUNDA SIBAL Pro
 
-Análise preditiva calculada:
-- Score de competitividade: ${analysis.score}%
-- Principais riscos: ${analysis.riscos.join(', ')}
-- Oportunidades: ${analysis.oportunidades.join(', ')}
+📋 INFORMAÇÕES BÁSICAS:
+• Objeto: ${licitacao.objeto}
+• Órgão: ${licitacao.orgao_nome}
+• UF: ${licitacao.uf}
+• Modalidade: ${licitacao.modalidade_licitacao_nome}
+• Situação: ${licitacao.situacao_nome}
+• Número de Controle PNCP: ${licitacao.numero_controle_pncp}
 
-Forneça uma análise detalhada desta licitação incluindo recomendações estratégicas.`;
+💰 DADOS FINANCEIROS:
+• Valor Global: ${licitacao.valor_global ? `R$ ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(licitacao.valor_global)}` : 'Não informado'}
+
+📅 CRONOGRAMA:
+• Data de Publicação: ${new Date(licitacao.data_publicacao_pncp).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+• Data de Atualização: ${new Date(licitacao.data_atualizacao_pncp).toLocaleDateString('pt-BR')}
+
+🎯 ANÁLISE PREDITIVA SIBAL:
+• Score de Competitividade: ${analysis.score}% (${analysis.score >= 80 ? 'ALTO POTENCIAL' : analysis.score >= 60 ? 'MODERADO' : 'BAIXO POTENCIAL'})
+• Categoria de Risco: ${analysis.riscos.length > 2 ? 'ALTO RISCO' : analysis.riscos.length > 0 ? 'RISCO MODERADO' : 'BAIXO RISCO'}
+
+⚠️ PRINCIPAIS RISCOS IDENTIFICADOS:
+${analysis.riscos.map((risco, i) => `${i + 1}. ${risco}`).join('\n')}
+
+🎯 OPORTUNIDADES DETECTADAS:
+${analysis.oportunidades.map((oport, i) => `${i + 1}. ${oport}`).join('\n')}
+
+🎯 SOLICITAÇÃO:
+Realize uma ANÁLISE PROFUNDA E ESTRATÉGICA desta licitação, incluindo:
+
+1. 📊 Análise de viabilidade e competitividade
+2. ⚖️ Aspectos jurídicos e normativos relevantes
+3. 💡 Estratégias de participação otimizadas
+4. 🎯 Recomendações específicas para maximizar chances de sucesso
+5. ⚠️ Pontos críticos de atenção e compliance
+6. 📈 Análise de mercado e concorrência
+7. 🛡️ Gestão de riscos e contingências
+
+Forneça insights avançados e recomendações práticas para decisão estratégica.`;
 
     // Armazenar mensagem para envio automático e limpar mensagem anterior
     setPendingAIMessage('');
