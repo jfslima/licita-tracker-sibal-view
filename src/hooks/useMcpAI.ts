@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -14,7 +14,7 @@ export function useMcpAI() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const sendMessage = async (content: string, context?: string) => {
+  const sendMessage = useCallback(async (content: string, context?: string) => {
     if (!content.trim()) return;
     
     const newUserMessage: Message = {
@@ -68,7 +68,7 @@ Responda sempre de forma estruturada, clara e baseada na legislação brasileira
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           messages: conversationMessages,
-          model: 'meta-llama/llama-4-maverick-17b-128e-instruct'
+          model: 'llama-3.1-70b-versatile'
         }
       });
 
@@ -129,7 +129,7 @@ Responda sempre de forma estruturada, clara e baseada na legislação brasileira
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const summarizeDocument = async (documentText: string, documentType: string) => {
     const prompt = `Analise e resuma o seguinte documento de licitação (${documentType}):\n\n${documentText}\n\nForneça um resumo estruturado com:\n1. Tipo de documento e objeto principal\n2. Valor estimado (se disponível)\n3. Prazos importantes\n4. Principais exigências\n5. Pontos de atenção para licitantes`;
