@@ -31,7 +31,7 @@ export function AIChat({ isOpen, onClose, documentContext, autoSendMessage }: AI
     if (autoSendMessage && isOpen) {
       sendMessage(autoSendMessage);
     }
-  }, [autoSendMessage, isOpen, sendMessage]);
+  }, [autoSendMessage, isOpen]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
