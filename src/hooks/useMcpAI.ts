@@ -68,13 +68,40 @@ Responda sempre de forma estruturada, clara e baseada na legislação brasileira
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           messages: conversationMessages,
-          model: 'llama-3.3-70b-versatile'
+          model: 'llama-3.1-70b-versatile'
         }
       });
 
       if (error) {
         console.error('Supabase function error:', error);
+        
+        // Verificar se é erro de API key não configurada
+        if (error.message.includes('GROQ_API_KEY')) {
+          toast({
+            title: "Configuração Necessária",
+            description: "A chave API da Groq precisa ser configurada. Configure nas configurações do Supabase.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         throw new Error(`Erro na IA: ${error.message}`);
+      }
+
+      if (data?.success === false) {
+        console.error('AI API Error:', data);
+        let errorMsg = data.error || 'Erro desconhecido da IA';
+        
+        if (data.requiresApiKey) {
+          errorMsg = 'GROQ_API_KEY não configurada. Configure a chave API.';
+        }
+        
+        toast({
+          title: "Erro na IA",
+          description: errorMsg,
+          variant: "destructive",
+        });
+        return;
       }
 
       if (data?.response) {
@@ -86,13 +113,17 @@ Responda sempre de forma estruturada, clara e baseada na legislação brasileira
         setMessages(prev => [...prev, assistantMessage]);
       } else {
         console.error('No response from AI:', data);
-        throw new Error('Resposta vazia da IA');
+        toast({
+          title: "Erro na IA",
+          description: "Resposta vazia da IA. Tente reformular sua pergunta.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       toast({
         title: "Erro na IA",
-        description: "Não foi possível processar sua mensagem. Tente novamente.",
+        description: error instanceof Error ? error.message : "Erro desconhecido. Tente novamente.",
         variant: "destructive",
       });
     } finally {
