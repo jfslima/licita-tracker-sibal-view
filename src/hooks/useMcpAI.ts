@@ -48,8 +48,8 @@ Responda de forma clara, objetiva e sempre baseada na legislação brasileira at
         { role: 'user', content: content }
       ];
 
-      // Usar a Edge Function mcp-api do Supabase
-      const { data, error } = await supabase.functions.invoke('mcp-api', {
+      // Usar a Edge Function ai-chat do Supabase
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           messages: conversationMessages,
           model: 'meta-llama/llama-4-scout-17b-16e-instruct'
@@ -57,6 +57,7 @@ Responda de forma clara, objetiva e sempre baseada na legislação brasileira at
       });
 
       if (error) {
+        console.error('Supabase function error:', error);
         throw new Error(`Erro na IA: ${error.message}`);
       }
 
@@ -68,6 +69,7 @@ Responda de forma clara, objetiva e sempre baseada na legislação brasileira at
         };
         setMessages(prev => [...prev, assistantMessage]);
       } else {
+        console.error('No response from AI:', data);
         throw new Error('Resposta vazia da IA');
       }
     } catch (error) {
