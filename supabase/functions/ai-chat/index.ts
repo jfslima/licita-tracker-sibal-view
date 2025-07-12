@@ -57,9 +57,9 @@ serve(async (req) => {
       body: JSON.stringify({
         model: model,
         messages: messages,
-        max_tokens: 2048,
-        temperature: 0.7,
-        top_p: 0.9,
+        max_tokens: 2024,
+        temperature: 0.2,
+        top_p: 1,
         stream: false
       }),
     })
