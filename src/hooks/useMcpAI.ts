@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define tipos para mensagens e respostas
 interface Message {
@@ -7,40 +8,6 @@ interface Message {
   content: string;
   timestamp?: Date;
 }
-
-interface MCPResponse {
-  choices?: Array<{
-    message?: Message;
-  }>;
-}
-
-interface ChatRequest {
-  model: string;
-  messages: Message[];
-}
-
-// Implementação simplificada de cliente MCP usando fetch
-const mcpClient = {
-  async chat(request: ChatRequest): Promise<MCPResponse> {
-    const response = await fetch(import.meta.env.VITE_MCP_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        [import.meta.env.VITE_MCP_HEADER]: import.meta.env.VITE_MCP_TOKEN
-      },
-      body: JSON.stringify({
-        type: "chat",
-        arguments: request
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Erro na comunicação com MCP: ${response.status}`);
-    }
-    
-    return await response.json();
-  }
-};
 
 export function useMcpAI() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -74,24 +41,34 @@ ${context ? `Contexto adicional do documento: ${context}` : ''}
 
 Responda de forma clara, objetiva e sempre baseada na legislação brasileira atual.`;
 
-      // Preparar mensagens para o MCP
-      const mcpMessages: Message[] = [
+      // Preparar mensagens para a Edge Function
+      const conversationMessages = [
         { role: 'system', content: systemPrompt },
-        ...messages,
+        ...messages.map(m => ({ role: m.role, content: m.content })),
         { role: 'user', content: content }
       ];
 
-      const res = await mcpClient.chat({
-        model: import.meta.env.VITE_LOVABLE_MODEL,
-        messages: mcpMessages
+      // Usar a Edge Function mcp-api do Supabase
+      const { data, error } = await supabase.functions.invoke('mcp-api', {
+        body: {
+          messages: conversationMessages,
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct'
+        }
       });
 
-      if (res.choices?.[0]?.message) {
+      if (error) {
+        throw new Error(`Erro na IA: ${error.message}`);
+      }
+
+      if (data?.response) {
         const assistantMessage: Message = {
-          ...res.choices[0].message,
+          role: 'assistant',
+          content: data.response,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, assistantMessage]);
+      } else {
+        throw new Error('Resposta vazia da IA');
       }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
