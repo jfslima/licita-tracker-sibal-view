@@ -39,7 +39,8 @@ export function LicitacaoMcpDashboard() {
         tipos_documento: 'edital',
         pagina: '1',
         tam_pagina: '20',
-        ordenacao: '-data'
+        ordenacao: '-data',
+        status: 'aberta' // Filtro obrigatório conforme API PNCP
       });
 
       if (searchTerm.trim()) {
