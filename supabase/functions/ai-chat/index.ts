@@ -39,7 +39,7 @@ serve(async (req) => {
         success: false,
         requiresApiKey: true
       }), {
-        status: 400,
+        status: 200, // Mudando para 200 para evitar erro no cliente
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -82,7 +82,7 @@ serve(async (req) => {
         success: false,
         details: errorText
       }), {
-        status: groqResponse.status,
+        status: 200, // Mudando para 200 para evitar erro no cliente
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -96,7 +96,7 @@ serve(async (req) => {
         error: 'Resposta vazia da IA. Tente reformular sua pergunta.',
         success: false
       }), {
-        status: 500,
+        status: 200, // Mudando para 200 para evitar erro no cliente
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -108,7 +108,7 @@ serve(async (req) => {
         error: 'Conteúdo vazio na resposta da IA.',
         success: false
       }), {
-        status: 500,
+        status: 200, // Mudando para 200 para evitar erro no cliente
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
@@ -133,7 +133,7 @@ serve(async (req) => {
       success: false,
       timestamp: new Date().toISOString()
     }), {
-      status: 500,
+      status: 200, // Mudando para 200 para evitar erro no cliente
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   }
