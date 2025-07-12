@@ -411,29 +411,58 @@ export function LicitacaoMcpDashboard() {
           <CardContent>
             <div className="space-y-4">
               {licitacoesPNCP.map((item) => (
-                <div key={item.id} className="border rounded-lg p-4 space-y-3">
+                <div key={item.id} className="bg-white rounded-lg shadow hover:shadow-md transition-all duration-200 p-6 border group">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-medium text-lg">{item.objeto}</h3>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                        <span><strong>Órgão:</strong> {item.orgao_nome}</span>
-                        <span><strong>UF:</strong> {item.uf}</span>
-                        <span><strong>Modalidade:</strong> {item.modalidade_nome}</span>
+                      <div className="flex items-center gap-2 mb-3">
+                        <h3 className="font-semibold text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
+                          {item.objeto}
+                        </h3>
+                        {/* Indicator for urgent deadlines */}
+                        {item.data_publicacao_pncp && new Date(item.data_publicacao_pncp) >= new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span className="mr-1">⏰</span>
+                            Novo
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                        <span><strong>Valor:</strong> {formatCurrency(item.valor_global)}</span>
-                        <span><strong>Data:</strong> {formatDate(item.data_publicacao_pncp)}</span>
-                        <Badge variant={item.situacao_nome === 'Vigente' ? 'default' : 'secondary'}>
+                      
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
+                          {item.modalidade_nome}
+                        </span>
+                        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-sm rounded-full">
+                          {item.uf}
+                        </span>
+                        {item.valor_global && (
+                          <span className="px-3 py-1 bg-amber-100 text-amber-800 text-sm rounded-full font-bold">
+                            {formatCurrency(item.valor_global)}
+                          </span>
+                        )}
+                        <Badge variant={
+                          item.situacao_nome === 'Vigente' || item.situacao_nome === 'Em andamento' 
+                            ? 'default' 
+                            : item.situacao_nome === 'Encerrado' 
+                            ? 'destructive' 
+                            : 'secondary'
+                        } className="rounded-full">
                           {item.situacao_nome}
                         </Badge>
                       </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div><strong>Órgão:</strong> {item.orgao_nome}</div>
+                        <div><strong>Publicado:</strong> {formatDate(item.data_publicacao_pncp)}</div>
+                        <div><strong>Controle PNCP:</strong> {item.numero_controle_pncp}</div>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    
+                    <div className="flex flex-col gap-2 ml-4">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleSaveToDB(item)}
-                        className="gap-2"
+                        className="gap-2 hover:bg-blue-50 hover:border-blue-300"
                       >
                         <Plus className="h-4 w-4" />
                         Salvar
@@ -441,7 +470,7 @@ export function LicitacaoMcpDashboard() {
                       <Button
                         size="sm"
                         onClick={() => handleAnalyzePNCP(item)}
-                        className="gap-2"
+                        className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                       >
                         <Bot className="h-4 w-4" />
                         Analisar IA
