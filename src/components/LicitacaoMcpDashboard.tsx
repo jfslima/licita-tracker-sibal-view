@@ -28,6 +28,7 @@ export function LicitacaoMcpDashboard() {
   const [analyzedData, setAnalyzedData] = useState<Record<string, any>>({});
   const [monitoringActive, setMonitoringActive] = useState(false);
   const [alertsCount, setAlertsCount] = useState(0);
+  const [pendingAIMessage, setPendingAIMessage] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -90,14 +91,35 @@ export function LicitacaoMcpDashboard() {
   };
 
   const handleAnalyzeWithAI = async (licitacao: any) => {
-    setShowAIChat(true);
-    
-    // Realizar análise preditiva
+    // Realizar análise preditiva primeiro
     const analysis = await performPredictiveAnalysis(licitacao);
     setAnalyzedData(prev => ({
       ...prev,
       [licitacao.id]: analysis
     }));
+    
+    // Abrir chat e enviar análise automática para IA
+    setShowAIChat(true);
+    
+    // Preparar contexto da licitação para IA
+    const contexto = `Analise esta licitação:
+    
+Objeto: ${licitacao.objeto}
+Órgão: ${licitacao.orgao_nome}
+Modalidade: ${licitacao.modalidade_licitacao_nome}
+Valor: ${licitacao.valor_global ? `R$ ${new Intl.NumberFormat('pt-BR').format(licitacao.valor_global)}` : 'Não informado'}
+Data de publicação: ${new Date(licitacao.data_publicacao_pncp).toLocaleDateString('pt-BR')}
+
+Análise preditiva calculada:
+- Score de competitividade: ${analysis.score}%
+- Principais riscos: ${analysis.riscos.join(', ')}
+- Oportunidades: ${analysis.oportunidades.join(', ')}
+
+Forneça uma análise detalhada desta licitação incluindo recomendações estratégicas.`;
+
+    // Armazenar mensagem para envio automático e limpar mensagem anterior
+    setPendingAIMessage('');
+    setTimeout(() => setPendingAIMessage(contexto), 100);
     
     toast({
       title: "Análise Iniciada",
@@ -508,7 +530,11 @@ export function LicitacaoMcpDashboard() {
                 </Button>
               </div>
               <div className="h-96">
-                <AIChat isOpen={true} onClose={() => setShowAIChat(false)} />
+                <AIChat 
+                  isOpen={true} 
+                  onClose={() => setShowAIChat(false)} 
+                  autoSendMessage={pendingAIMessage}
+                />
               </div>
             </div>
           </div>
