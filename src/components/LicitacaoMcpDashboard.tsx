@@ -188,11 +188,22 @@ export function LicitacaoMcpDashboard() {
   const openEditalPNCP = (licitacao: any) => {
     if (licitacao.numero_controle_pncp) {
       const url = `https://pncp.gov.br/app/editais/${licitacao.numero_controle_pncp}`;
+      toast({
+        title: "Abrindo edital",
+        description: "Redirecionando para o PNCP... Se houver erro, é instabilidade temporária do portal.",
+      });
+      window.open(url, '_blank');
+    } else if (licitacao.item_url) {
+      const url = `https://pncp.gov.br${licitacao.item_url}`;
+      toast({
+        title: "Abrindo edital",
+        description: "Redirecionando para o PNCP... Se houver erro, é instabilidade temporária do portal.",
+      });
       window.open(url, '_blank');
     } else {
       toast({
         title: "Link não disponível",
-        description: "Número de controle PNCP não encontrado para esta licitação.",
+        description: "URL do edital não encontrada para esta licitação.",
         variant: "destructive",
       });
     }
