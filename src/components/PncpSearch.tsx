@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Calendar, Building, FileText, ExternalLink, Loader2, AlertCircle, Copy, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,19 +10,25 @@ import { usePncp } from '@/hooks/usePncp';
 import { useToast } from '@/hooks/use-toast';
 
 export function PncpSearch() {
-  const { loading, error, editais, totalPaginas, buscarEditais, limparEditais } = usePncp();
+  const { loading, error, editais, totalPaginas, buscarEditais, limparEditais, filtros, carregarFiltros } = usePncp();
   const { toast } = useToast();
   const [palavraChave, setPalavraChave] = useState('');
   const [status, setStatus] = useState('recebendo_proposta');
+  const [tipoDocumento, setTipoDocumento] = useState('edital');
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    carregarFiltros(tipoDocumento);
+  }, [tipoDocumento, carregarFiltros]);
 
   const handleBuscar = async (novaPagina = 1) => {
     setPaginaAtual(novaPagina);
     await buscarEditais({
       pagina: novaPagina,
       status,
-      palavraChave: palavraChave.trim() || undefined
+      palavraChave: palavraChave.trim() || undefined,
+      tipoDocumento
     });
   };
 
@@ -105,7 +111,20 @@ export function PncpSearch() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Tipo de Documento */}
+            <Select value={tipoDocumento} onValueChange={setTipoDocumento}>
+              <SelectTrigger>
+                <SelectValue placeholder="Tipo de Documento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="edital">Editais</SelectItem>
+                <SelectItem value="ata">Atas de Registro</SelectItem>
+                <SelectItem value="contrato">Contratos</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Campo de busca */}
             <Input
               placeholder="Digite palavras-chave (ex: exército, saúde, TI)..."
               value={palavraChave}
@@ -113,14 +132,31 @@ export function PncpSearch() {
               onKeyPress={(e) => e.key === 'Enter' && handleBuscar()}
               className="flex-1"
             />
+
+            {/* Status - usando filtros dinâmicos quando disponíveis */}
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recebendo_proposta">Recebendo Proposta</SelectItem>
-                <SelectItem value="divulgado">Divulgado</SelectItem>
-                <SelectItem value="concluido">Concluído</SelectItem>
+                {filtros.status && filtros.status.length > 0 ? (
+                  filtros.status.map((statusOption: string) => (
+                    <SelectItem key={statusOption} value={statusOption}>
+                      {statusOption === 'recebendo_proposta' ? 'Recebendo Proposta' :
+                       statusOption === 'divulgado' ? 'Divulgado' :
+                       statusOption === 'concluido' ? 'Concluído' :
+                       statusOption === 'vigente' ? 'Vigente' :
+                       statusOption}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <>
+                    <SelectItem value="recebendo_proposta">Recebendo Proposta</SelectItem>
+                    <SelectItem value="divulgado">Divulgado</SelectItem>
+                    <SelectItem value="concluido">Concluído</SelectItem>
+                    <SelectItem value="vigente">Vigente</SelectItem>
+                  </>
+                )}
                 <SelectItem value="todos">Todos</SelectItem>
               </SelectContent>
             </Select>
