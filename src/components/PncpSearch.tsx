@@ -59,12 +59,10 @@ export function PncpSearch() {
   };
 
   const construirLinkPncp = (edital: any) => {
-    // Usar item_url que vem da API do PNCP
-    if (edital.item_url) {
-      return `https://pncp.gov.br${edital.item_url}`;
-    }
-    // Fallback caso não tenha item_url
-    return `https://pncp.gov.br/app/editais/${edital.numero_controle_pncp || edital.id}`;
+    // Usar item_url que vem da API do PNCP - sempre presente
+    return edital.item_url.startsWith('http') 
+      ? edital.item_url 
+      : `https://pncp.gov.br${edital.item_url}`;
   };
 
   const copiarNumeroControle = async (numeroControle: string) => {
