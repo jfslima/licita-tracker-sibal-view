@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Brain, Search, Calendar, MapPin, DollarSign, MessageCircle, ExternalLink, Download, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Brain, Search, Calendar, MapPin, DollarSign, MessageCircle, ExternalLink, Download, TrendingUp, AlertCircle, CheckCircle, FileText } from 'lucide-react';
 import { AIChat } from './AIChat';
+import { Link } from 'react-router-dom';
 
 interface LicitacaoPNCP {
   id: string;
@@ -346,6 +347,18 @@ Forneça insights avançados e recomendações práticas para decisão estratég
               >
                 <MessageCircle className="h-4 w-4 mr-2" />
                 {showAIChat ? 'Fechar' : 'Assistente IA'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Consulta de Documentos Button */}
+          <Card className="border-0 shadow-md">
+            <CardContent className="p-6">
+              <Button asChild className="bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700" size="lg">
+                <Link to="/consulta-documentos">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Consulta de Documentos
+                </Link>
               </Button>
             </CardContent>
           </Card>
