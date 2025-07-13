@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DocumentUpload } from '@/components/DocumentUpload';
+import { PncpSearch } from '@/components/PncpSearch';
 import { 
   TrendingUp, 
   AlertTriangle, 
@@ -99,8 +100,12 @@ export function AdvancedDashboard({ licitacoes, onClose }: AdvancedDashboardProp
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="documents" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs defaultValue="pncp" className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="pncp" className="gap-2">
+              <FileText className="h-4 w-4" />
+              PNCP
+            </TabsTrigger>
             <TabsTrigger value="documents" className="gap-2">
               <Upload className="h-4 w-4" />
               Documentos
@@ -122,6 +127,10 @@ export function AdvancedDashboard({ licitacoes, onClose }: AdvancedDashboardProp
               IA
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="pncp" className="space-y-4">
+            <PncpSearch />
+          </TabsContent>
 
           <TabsContent value="documents" className="space-y-4">
             <DocumentUpload onAnalysisComplete={(analysis, extractedText) => {
