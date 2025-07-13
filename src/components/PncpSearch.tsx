@@ -49,8 +49,13 @@ export function PncpSearch() {
     }).format(valor);
   };
 
-  const construirLinkPncp = (itemUrl: string) => {
-    return `https://pncp.gov.br${itemUrl}`;
+  const construirLinkPncp = (edital: any) => {
+    // Usar item_url que vem da API do PNCP
+    if (edital.item_url) {
+      return `https://pncp.gov.br${edital.item_url}`;
+    }
+    // Fallback caso não tenha item_url
+    return `https://pncp.gov.br/app/editais/${edital.numero_controle_pncp || edital.id}`;
   };
 
   const copiarNumeroControle = async (numeroControle: string) => {
@@ -234,7 +239,7 @@ export function PncpSearch() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => abrirComAviso(edital.url_documento || `https://pncp.gov.br/app/editais/${edital.id}`)}
+                      onClick={() => abrirComAviso(construirLinkPncp(edital))}
                       className="flex items-center gap-2"
                     >
                       <ExternalLink className="h-3 w-3" />
