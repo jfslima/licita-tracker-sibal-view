@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DocumentUpload } from '@/components/DocumentUpload';
 import { 
   TrendingUp, 
   AlertTriangle, 
@@ -17,7 +18,8 @@ import {
   DollarSign,
   Activity,
   Brain,
-  Zap
+  Zap,
+  Upload
 } from 'lucide-react';
 
 interface AdvancedDashboardProps {
@@ -97,15 +99,19 @@ export function AdvancedDashboard({ licitacoes, onClose }: AdvancedDashboardProp
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="competitive" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="documents" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="documents" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Documentos
+            </TabsTrigger>
             <TabsTrigger value="competitive" className="gap-2">
               <Target className="h-4 w-4" />
-              Inteligência Competitiva
+              Inteligência
             </TabsTrigger>
             <TabsTrigger value="risks" className="gap-2">
               <AlertTriangle className="h-4 w-4" />
-              Análise de Riscos
+              Riscos
             </TabsTrigger>
             <TabsTrigger value="performance" className="gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -113,9 +119,16 @@ export function AdvancedDashboard({ licitacoes, onClose }: AdvancedDashboardProp
             </TabsTrigger>
             <TabsTrigger value="ai-insights" className="gap-2">
               <Brain className="h-4 w-4" />
-              Insights IA
+              IA
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="documents" className="space-y-4">
+            <DocumentUpload onAnalysisComplete={(analysis, extractedText) => {
+              console.log('Document analysis completed:', analysis, extractedText);
+              // Aqui você pode adicionar lógica para salvar a análise na base de dados
+            }} />
+          </TabsContent>
 
           <TabsContent value="competitive" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
