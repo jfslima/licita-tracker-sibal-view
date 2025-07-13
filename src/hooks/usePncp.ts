@@ -2,23 +2,24 @@ import { useState, useCallback } from 'react';
 
 interface PncpContratacao {
   id: string;
-  title: string;
-  description: string;
-  item_url: string;
-  document_type: string;
-  numero_controle_pncp: string;
+  titulo: string;
+  objeto?: string;
   orgao_nome: string;
-  modalidade_licitacao_nome: string;
-  data_fim_vigencia?: string;
-  valor_global?: number;
-  situacao_nome: string;
+  modalidade_codigo: number;
+  modalidade_nome?: string;
+  data_fim_proposta?: string;
+  valor_estimado?: number;
+  status: string;
   uf: string;
-  municipio_nome: string;
+  municipio_nome?: string;
+  url_documento?: string;
 }
 
 interface PncpResponse {
-  items: PncpContratacao[];
-  total_records?: number;
+  dados: PncpContratacao[];
+  total_registros: number;
+  total_paginas: number;
+  pagina_corrente: number;
 }
 
 interface UsePncpReturn {
@@ -34,6 +35,7 @@ interface BuscarEditaisParams {
   pagina?: number;
   palavraChave?: string;
   status?: string;
+  uf?: string;
 }
 
 export function usePncp(): UsePncpReturn {
@@ -50,7 +52,8 @@ export function usePncp(): UsePncpReturn {
       const {
         pagina = 1,
         palavraChave,
-        status = 'aberta'
+        status = 'recebendo_proposta',
+        uf
       } = params;
 
       const url = new URL('https://pncp.gov.br/api/search/');
@@ -58,10 +61,17 @@ export function usePncp(): UsePncpReturn {
       url.searchParams.append('pagina', pagina.toString());
       url.searchParams.append('tam_pagina', '20');
       url.searchParams.append('ordenacao', '-data');
-      url.searchParams.append('status', status);
+      
+      if (status) {
+        url.searchParams.append('status', status);
+      }
 
       if (palavraChave && palavraChave.trim()) {
         url.searchParams.append('q', palavraChave.trim());
+      }
+
+      if (uf) {
+        url.searchParams.append('uf', uf);
       }
 
       const response = await fetch(url.toString(), {
@@ -77,7 +87,7 @@ export function usePncp(): UsePncpReturn {
 
       const data: PncpResponse = await response.json();
       
-      const editaisRecebidos = data.items || [];
+      const editaisRecebidos = data.dados || [];
 
       if (pagina === 1) {
         setEditais(editaisRecebidos);
@@ -85,9 +95,7 @@ export function usePncp(): UsePncpReturn {
         setEditais(prev => [...prev, ...editaisRecebidos]);
       }
 
-      // Estimativa de páginas baseada em 20 itens por página
-      const totalEstimado = data.total_records || editaisRecebidos.length * 10;
-      setTotalPaginas(Math.ceil(totalEstimado / 20));
+      setTotalPaginas(data.total_paginas || Math.ceil((data.total_registros || 0) / 20));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar editais';
       setError(errorMessage);
