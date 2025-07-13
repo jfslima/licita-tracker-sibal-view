@@ -11,14 +11,14 @@ import { usePncp } from '@/hooks/usePncp';
 export function PncpSearch() {
   const { loading, error, editais, totalPaginas, buscarEditais, limparEditais } = usePncp();
   const [palavraChave, setPalavraChave] = useState('');
-  const [modalidade, setModalidade] = useState('0');
+  const [status, setStatus] = useState('aberta');
   const [paginaAtual, setPaginaAtual] = useState(1);
 
   const handleBuscar = async (novaPagina = 1) => {
     setPaginaAtual(novaPagina);
     await buscarEditais({
       pagina: novaPagina,
-      modalidade: parseInt(modalidade),
+      status,
       palavraChave: palavraChave.trim() || undefined
     });
   };
@@ -29,7 +29,8 @@ export function PncpSearch() {
     }
   };
 
-  const formatarData = (data: string) => {
+  const formatarData = (data?: string) => {
+    if (!data) return 'Não informado';
     try {
       return new Date(data).toLocaleDateString('pt-BR');
     } catch {
@@ -43,6 +44,10 @@ export function PncpSearch() {
       style: 'currency',
       currency: 'BRL'
     }).format(valor);
+  };
+
+  const construirLinkPncp = (itemUrl: string) => {
+    return `https://pncp.gov.br${itemUrl}`;
   };
 
   return (
@@ -66,17 +71,15 @@ export function PncpSearch() {
               onKeyPress={(e) => e.key === 'Enter' && handleBuscar()}
               className="flex-1"
             />
-            <Select value={modalidade} onValueChange={setModalidade}>
+            <Select value={status} onValueChange={setStatus}>
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Todas as modalidades</SelectItem>
-                <SelectItem value="8">Pregão eletrônico</SelectItem>
-                <SelectItem value="1">Concorrência</SelectItem>
-                <SelectItem value="2">Tomada de preços</SelectItem>
-                <SelectItem value="3">Convite</SelectItem>
-                <SelectItem value="5">Concurso</SelectItem>
+                <SelectItem value="aberta">Recebendo Proposta</SelectItem>
+                <SelectItem value="julgamento">Em Julgamento</SelectItem>
+                <SelectItem value="encerrada">Encerrada</SelectItem>
+                <SelectItem value="">Todos</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -137,61 +140,71 @@ export function PncpSearch() {
 
           <div className="grid gap-4">
             {editais.map((edital) => (
-              <Card key={edital.numeroControle} className="hover:shadow-md transition-shadow">
+              <Card key={edital.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <CardTitle className="text-base leading-tight">
-                        {edital.titulo}
+                        {edital.title}
                       </CardTitle>
                       <CardDescription className="mt-1">
                         <div className="flex items-center gap-1">
                           <Building className="h-3 w-3" />
-                          {edital.orgaoNome}
+                          {edital.orgao_nome}
                         </div>
                       </CardDescription>
+                      {edital.description && (
+                        <CardDescription className="mt-2 text-xs">
+                          {edital.description}
+                        </CardDescription>
+                      )}
                     </div>
                     <Badge variant="secondary">
-                      {edital.modalidadeNome}
+                      {edital.modalidade_licitacao_nome}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>Prazo: {formatarData(edital.dataFimRecebimentoProposta)}</span>
-                    </div>
+                    {edital.data_fim_vigencia && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span>Prazo: {formatarData(edital.data_fim_vigencia)}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span>Controle: {edital.numeroControle}</span>
+                      <span>Controle: {edital.numero_controle_pncp}</span>
                     </div>
-                    {edital.valorEstimado && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs">
+                        <Badge variant="outline">{edital.uf}</Badge> {edital.municipio_nome}
+                      </span>
+                    </div>
+                    {edital.valor_global && (
                       <div className="text-sm font-medium">
-                        Valor: {formatarValor(edital.valorEstimado)}
+                        Valor: {formatarValor(edital.valor_global)}
                       </div>
                     )}
                   </div>
                   
-                  {edital.linkSistemaOrigem && (
-                    <div className="mt-3 pt-3 border-t">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        asChild
+                  <div className="mt-3 pt-3 border-t">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      asChild
+                    >
+                      <a 
+                        href={construirLinkPncp(edital.item_url)} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
                       >
-                        <a 
-                          href={edital.linkSistemaOrigem} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          Ver no PNCP
-                        </a>
-                      </Button>
-                    </div>
-                  )}
+                        <ExternalLink className="h-3 w-3" />
+                        Ver no PNCP
+                      </a>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

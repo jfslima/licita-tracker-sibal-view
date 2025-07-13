@@ -1,20 +1,24 @@
 import { useState, useCallback } from 'react';
 
 interface PncpContratacao {
-  numeroControle: string;
-  titulo: string;
-  dataFimRecebimentoProposta: string;
-  orgaoNome: string;
-  valorEstimado?: number;
-  modalidadeNome: string;
-  situacao: string;
-  linkSistemaOrigem?: string;
+  id: string;
+  title: string;
+  description: string;
+  item_url: string;
+  document_type: string;
+  numero_controle_pncp: string;
+  orgao_nome: string;
+  modalidade_licitacao_nome: string;
+  data_fim_vigencia?: string;
+  valor_global?: number;
+  situacao_nome: string;
+  uf: string;
+  municipio_nome: string;
 }
 
 interface PncpResponse {
-  contratacoes: PncpContratacao[];
-  totalPaginas: number;
-  totalRegistros: number;
+  items: PncpContratacao[];
+  total_records?: number;
 }
 
 interface UsePncpReturn {
@@ -28,10 +32,8 @@ interface UsePncpReturn {
 
 interface BuscarEditaisParams {
   pagina?: number;
-  dataInicial?: string;
-  dataFinal?: string;
-  modalidade?: number;
   palavraChave?: string;
+  status?: string;
 }
 
 export function usePncp(): UsePncpReturn {
@@ -47,18 +49,19 @@ export function usePncp(): UsePncpReturn {
     try {
       const {
         pagina = 1,
-        dataFinal = new Date().toISOString().slice(0, 10).replace(/-/g, ''),
-        modalidade = 0, // todas as modalidades
-        palavraChave
+        palavraChave,
+        status = 'aberta'
       } = params;
 
-      const url = new URL('https://pncp.gov.br/api/consulta/v1/contratacoes/proposta');
-      url.searchParams.append('dataFinal', dataFinal);
-      url.searchParams.append('codigoModalidadeContratacao', modalidade.toString());
+      const url = new URL('https://pncp.gov.br/api/search/');
+      url.searchParams.append('tipos_documento', 'edital');
       url.searchParams.append('pagina', pagina.toString());
+      url.searchParams.append('tam_pagina', '20');
+      url.searchParams.append('ordenacao', '-data');
+      url.searchParams.append('status', status);
 
-      if (params.dataInicial) {
-        url.searchParams.append('dataInicial', params.dataInicial);
+      if (palavraChave && palavraChave.trim()) {
+        url.searchParams.append('q', palavraChave.trim());
       }
 
       const response = await fetch(url.toString(), {
@@ -74,24 +77,17 @@ export function usePncp(): UsePncpReturn {
 
       const data: PncpResponse = await response.json();
       
-      let editaisFiltrados = data.contratacoes || [];
-
-      // Filtro client-side por palavra-chave
-      if (palavraChave && palavraChave.trim()) {
-        const termo = palavraChave.toLowerCase().trim();
-        editaisFiltrados = editaisFiltrados.filter(edital =>
-          edital.titulo.toLowerCase().includes(termo) ||
-          edital.orgaoNome.toLowerCase().includes(termo)
-        );
-      }
+      const editaisRecebidos = data.items || [];
 
       if (pagina === 1) {
-        setEditais(editaisFiltrados);
+        setEditais(editaisRecebidos);
       } else {
-        setEditais(prev => [...prev, ...editaisFiltrados]);
+        setEditais(prev => [...prev, ...editaisRecebidos]);
       }
 
-      setTotalPaginas(data.totalPaginas || 1);
+      // Estimativa de páginas baseada em 20 itens por página
+      const totalEstimado = data.total_records || editaisRecebidos.length * 10;
+      setTotalPaginas(Math.ceil(totalEstimado / 20));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar editais';
       setError(errorMessage);
