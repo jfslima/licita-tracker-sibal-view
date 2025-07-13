@@ -36,6 +36,8 @@ interface UsePncpReturn {
   totalPaginas: number;
   buscarEditais: (params?: BuscarEditaisParams) => Promise<void>;
   limparEditais: () => void;
+  filtros: any;
+  carregarFiltros: (tipoDocumento: string) => Promise<void>;
 }
 
 interface BuscarEditaisParams {
@@ -43,6 +45,7 @@ interface BuscarEditaisParams {
   palavraChave?: string;
   status?: string;
   uf?: string;
+  tipoDocumento?: string;
 }
 
 export function usePncp(): UsePncpReturn {
@@ -50,6 +53,27 @@ export function usePncp(): UsePncpReturn {
   const [error, setError] = useState<string | null>(null);
   const [editais, setEditais] = useState<PncpContratacao[]>([]);
   const [totalPaginas, setTotalPaginas] = useState(0);
+  const [filtros, setFiltros] = useState<any>({});
+
+  const carregarFiltros = useCallback(async (tipoDocumento: string = 'edital') => {
+    try {
+      const response = await fetch(`https://pncp.gov.br/api/search/filters?tipos_documento=${tipoDocumento}`, {
+        method: 'GET',
+        headers: {
+          'accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar filtros');
+      }
+
+      const data = await response.json();
+      setFiltros(data);
+    } catch (err) {
+      console.error('Erro ao carregar filtros:', err);
+    }
+  }, []);
 
   const buscarEditais = useCallback(async (params: BuscarEditaisParams = {}) => {
     setLoading(true);
@@ -60,11 +84,12 @@ export function usePncp(): UsePncpReturn {
         pagina = 1,
         palavraChave,
         status = 'recebendo_proposta',
-        uf
+        uf,
+        tipoDocumento = 'edital'
       } = params;
 
       const url = new URL('https://pncp.gov.br/api/search/');
-      url.searchParams.append('tipos_documento', 'edital');
+      url.searchParams.append('tipos_documento', tipoDocumento);
       url.searchParams.append('pagina', pagina.toString());
       url.searchParams.append('tam_pagina', '20');
       url.searchParams.append('ordenacao', '-data');
@@ -141,5 +166,7 @@ export function usePncp(): UsePncpReturn {
     totalPaginas,
     buscarEditais,
     limparEditais,
+    filtros,
+    carregarFiltros,
   };
 }
