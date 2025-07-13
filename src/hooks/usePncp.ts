@@ -62,7 +62,7 @@ export function usePncp(): UsePncpReturn {
       url.searchParams.append('tam_pagina', '20');
       url.searchParams.append('ordenacao', '-data');
       
-      if (status) {
+      if (status && status !== 'todos') {
         url.searchParams.append('status', status);
       }
 

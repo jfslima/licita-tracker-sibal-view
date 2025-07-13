@@ -116,7 +116,7 @@ export function PncpSearch() {
                 <SelectItem value="recebendo_proposta">Recebendo Proposta</SelectItem>
                 <SelectItem value="divulgado">Divulgado</SelectItem>
                 <SelectItem value="concluido">Concluído</SelectItem>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="todos">Todos</SelectItem>
               </SelectContent>
             </Select>
           </div>
