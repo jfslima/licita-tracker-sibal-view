@@ -7,21 +7,13 @@ const corsHeaders = {
 }
 
 interface McpRequest {
-  jsonrpc: string
-  id: number
   method: string
   params?: any
 }
 
 interface McpResponse {
-  jsonrpc: string
-  id: number
   result?: any
-  error?: {
-    code: number
-    message: string
-    data?: any
-  }
+  error?: string
 }
 
 // Initialize Supabase
@@ -29,77 +21,35 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Advanced MCP Tools for Commercial Platform
+// MCP Tools
 const tools = {
-  // Enhanced licitação retrieval with advanced filtering
-  async getLicitacao(params: { 
-    id?: string; 
-    filters?: any; 
-    page?: number; 
-    limit?: number;
-    sort?: string;
-    search?: string;
-  }) {
+  async getLicitacao(params: { id?: string }) {
     try {
-      let query = supabase.from('licitacoes').select('*')
-      
       if (params.id) {
-        query = query.eq('id', params.id)
-      }
-      
-      if (params.search) {
-        query = query.ilike('objeto', `%${params.search}%`)
-      }
-      
-      if (params.filters) {
-        if (params.filters.minValue) {
-          query = query.gte('valor', params.filters.minValue)
-        }
-        if (params.filters.maxValue) {
-          query = query.lte('valor', params.filters.maxValue)
-        }
-        if (params.filters.startDate) {
-          query = query.gte('criado_em', params.filters.startDate)
-        }
-        if (params.filters.endDate) {
-          query = query.lte('criado_em', params.filters.endDate)
-        }
-        if (params.filters.category) {
-          query = query.ilike('objeto', `%${params.filters.category}%`)
-        }
-      }
-      
-      // Apply sorting
-      if (params.sort) {
-        const [field, direction] = params.sort.split(':')
-        query = query.order(field, { ascending: direction === 'asc' })
+        const { data, error } = await supabase
+          .from('licitacoes')
+          .select('*')
+          .eq('id', params.id)
+          .single()
+        
+        if (error) throw error
+        return data
       } else {
-        query = query.order('criado_em', { ascending: false })
+        const { data, error } = await supabase
+          .from('licitacoes')
+          .select('*')
+          .order('criado_em', { ascending: false })
+          .limit(10)
+        
+        if (error) throw error
+        return data
       }
-      
-      const page = params.page || 1
-      const limit = params.limit || 10
-      query = query.range((page - 1) * limit, page * limit - 1)
-      
-      const { data, error } = await query
-      
-      if (error) throw error
-      return data
     } catch (error) {
-      console.error('Error fetching licitações:', error)
       throw new Error(`Erro ao buscar licitação: ${error.message}`)
     }
   },
 
-  // Create new licitação with validation
-  async createLicitacao(params: { 
-    objeto: string; 
-    valor?: number; 
-    prazo?: string; 
-    rawData?: any;
-    category?: string;
-    agency?: string;
-  }) {
+  async createLicitacao(params: { objeto: string; valor?: number; prazo?: string; rawData?: any }) {
     try {
       const { data, error } = await supabase
         .from('licitacoes')
@@ -107,185 +57,69 @@ const tools = {
           objeto: params.objeto,
           valor: params.valor,
           prazo: params.prazo,
-          raw_data: {
-            ...params.rawData,
-            category: params.category,
-            agency: params.agency,
-            created_by: 'mcp_api'
-          }
+          raw_data: params.rawData || {}
         })
         .select()
         .single()
-        
+      
       if (error) throw error
       return data
     } catch (error) {
-      console.error('Error creating licitação:', error)
       throw new Error(`Erro ao criar licitação: ${error.message}`)
     }
   },
 
-  // Search PNCP with advanced filters
-  async searchPNCP(params: {
-    query?: string;
-    state?: string;
-    city?: string;
-    agency?: string;
-    modality?: string;
-    min_value?: number;
-    max_value?: number;
-    date_from?: string;
-    date_to?: string;
-    status?: string;
-    page?: number;
-    limit?: number;
-  }) {
-    try {
-      // Mock data for demonstration - in production this would call PNCP API
-      const mockResults = {
-        total: 150,
-        page: params.page || 1,
-        limit: params.limit || 20,
-        results: [
-          {
-            id: `pncp_${Date.now()}`,
-            objeto: `${params.query || 'Equipamentos de TI'} - Pregão Eletrônico`,
-            valor: Math.floor(Math.random() * 1000000),
-            orgao: params.agency || 'Prefeitura Municipal',
-            modalidade: params.modality || 'Pregão Eletrônico',
-            situacao: params.status || 'Em andamento',
-            data_abertura: new Date().toISOString(),
-            municipio: params.city || 'São Paulo',
-            uf: params.state || 'SP',
-            url_edital: 'https://pncp.gov.br/edital/123456'
-          }
-        ]
-      }
-      
-      return mockResults
-    } catch (error) {
-      console.error('Error searching PNCP:', error)
-      throw error
-    }
-  },
-
-  // Create and manage user alerts
-  async manageAlerts(params: {
-    action: 'create' | 'update' | 'delete' | 'list';
-    alert_data?: any;
-    alert_id?: string;
-    user_id?: string;
-  }) {
-    try {
-      const userId = params.user_id || '00000000-0000-0000-0000-000000000000'
-      
-      switch (params.action) {
-        case 'create':
-          const { data: newAlert, error: createError } = await supabase
-            .from('user_alerts')
-            .insert({
-              user_id: userId,
-              name: params.alert_data.name,
-              keywords: params.alert_data.keywords,
-              filters: params.alert_data.filters || {},
-              notification_email: params.alert_data.notification_email !== false,
-              notification_sms: params.alert_data.notification_sms || false
-            })
-            .select()
-            .single()
-            
-          if (createError) throw createError
-          return newAlert
-          
-        case 'list':
-          // Return mock alerts for demo
-          return [
-            {
-              id: '1',
-              name: 'Alerta TI',
-              keywords: ['tecnologia', 'software'],
-              is_active: true,
-              created_at: new Date().toISOString()
-            }
-          ]
-          
-        default:
-          throw new Error('Invalid action')
-      }
-    } catch (error) {
-      console.error('Error managing alerts:', error)
-      throw error
-    }
-  },
-
-  // Get business intelligence analytics
-  async getAnalytics(params: {
-    user_id?: string;
-    period?: string;
-    metrics?: string[];
-  }) {
-    try {
-      // Return mock analytics data
-      const processed = {
-        period: params.period || '30d',
-        total_searches: 45,
-        total_analyses: 12,
-        top_categories: {},
-        search_trends: [],
-        success_rate: 0.85,
-        roi_estimate: 2.3
-      }
-      
-      return processed
-    } catch (error) {
-      console.error('Error getting analytics:', error)
-      throw error
-    }
-  },
-
-  // Get subscription information
-  async getSubscription(params: { user_id?: string }) {
-    try {
-      const userId = params.user_id || '00000000-0000-0000-0000-000000000000'
-      
-      // Get subscription plans
-      const { data: plans, error: plansError } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .order('price_monthly', { ascending: true })
-        
-      if (plansError) throw plansError
-      
-      return {
-        current_subscription: {
-          subscription_plans: plans[0] // Mock current plan
-        },
-        available_plans: plans,
-        usage_stats: {
-          searches_used: 45,
-          alerts_used: 3,
-          ai_analyses_used: 12
-        }
-      }
-    } catch (error) {
-      console.error('Error getting subscription:', error)
-      throw error
-    }
-  },
-
-  // Legacy method for compatibility
   async analizarLicitacao(params: { id: string; texto: string }) {
     try {
       console.log('Analyzing licitacao:', params.id)
       
-      const mockAnalysis = {
-        id: params.id,
-        objeto: 'Análise concluída',
-        resumo_ia: 'Análise de viabilidade realizada com sucesso',
-        created_at: new Date().toISOString()
+      // Chamar Groq API para análise
+      const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('GROQ_API_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          messages: [
+            {
+              role: 'system',
+              content: 'Você é um especialista em análise de licitações brasileiras. Analise o edital e forneça um resumo estruturado com: objeto, valor estimado, prazo de execução, requisitos principais e riscos.'
+            },
+            {
+              role: 'user',
+              content: `Analise esta licitação: ${params.texto}`
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.1
+        }),
+      })
+
+      if (!groqResponse.ok) {
+        const errorText = await groqResponse.text()
+        console.error('Groq API error:', groqResponse.status, errorText)
+        throw new Error(`Groq API error: ${groqResponse.status}`)
+      }
+
+      const groqData = await groqResponse.json()
+      const resumoIA = groqData.choices[0].message.content
+
+      // Atualizar licitação com resumo da IA
+      const { data, error } = await supabase
+        .from('licitacoes')
+        .update({ resumo_ia: resumoIA })
+        .eq('id', params.id)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Database error:', error)
+        throw error
       }
       
-      return mockAnalysis
+      return data
     } catch (error) {
       console.error('Error in analizarLicitacao:', error)
       throw new Error(`Erro na análise IA: ${error.message}`)
@@ -294,8 +128,6 @@ const tools = {
 }
 
 serve(async (req) => {
-  console.log('MCP API called:', req.method, req.url)
-  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -315,7 +147,7 @@ serve(async (req) => {
           }
         },
         serverInfo: {
-          name: 'sibal-pro-mcp',
+          name: 'super-mcp-licitacoes',
           version: '1.0.0'
         }
       }), {
@@ -324,27 +156,7 @@ serve(async (req) => {
     }
 
     const mcpRequest: McpRequest = await req.json()
-    console.log('MCP Request:', mcpRequest)
-    
-    // Validate JSON-RPC 2.0 format
-    if (mcpRequest.jsonrpc !== '2.0' || typeof mcpRequest.id !== 'number') {
-      return new Response(JSON.stringify({
-        jsonrpc: '2.0',
-        id: mcpRequest.id || null,
-        error: {
-          code: -32600,
-          message: 'Invalid Request'
-        }
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
-    }
-
-    let response: McpResponse = {
-      jsonrpc: '2.0',
-      id: mcpRequest.id
-    }
+    let response: McpResponse = {}
 
     switch (mcpRequest.method) {
       case 'tools/list':
@@ -352,61 +164,38 @@ serve(async (req) => {
           tools: [
             {
               name: 'getLicitacao',
-              description: 'Buscar licitações com filtros avançados',
+              description: 'Buscar licitações por ID ou listar recentes',
               inputSchema: {
                 type: 'object',
                 properties: {
-                  id: { type: 'string', description: 'ID da licitação (opcional)' },
-                  filters: { type: 'object', description: 'Filtros de busca' },
-                  page: { type: 'number', description: 'Página' },
-                  limit: { type: 'number', description: 'Limite por página' },
-                  sort: { type: 'string', description: 'Ordenação (campo:asc/desc)' },
-                  search: { type: 'string', description: 'Busca por texto' }
+                  id: { type: 'string', description: 'ID da licitação (opcional)' }
                 }
               }
             },
             {
-              name: 'searchPNCP',
-              description: 'Busca avançada no PNCP',
+              name: 'createLicitacao',
+              description: 'Criar nova licitação',
               inputSchema: {
                 type: 'object',
                 properties: {
-                  query: { type: 'string', description: 'Termo de busca' },
-                  state: { type: 'string', description: 'Estado (UF)' },
-                  city: { type: 'string', description: 'Cidade' },
-                  agency: { type: 'string', description: 'Órgão' }
-                }
-              }
-            },
-            {
-              name: 'manageAlerts',
-              description: 'Gerenciar alertas de licitações',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  action: { type: 'string', description: 'create, update, delete, list' }
+                  objeto: { type: 'string', description: 'Objeto da licitação' },
+                  valor: { type: 'number', description: 'Valor estimado' },
+                  prazo: { type: 'string', description: 'Prazo de execução' },
+                  rawData: { type: 'object', description: 'Dados brutos do edital' }
                 },
-                required: ['action']
+                required: ['objeto']
               }
             },
             {
-              name: 'getAnalytics',
-              description: 'Obter analytics e relatórios',
+              name: 'analizarLicitacao',
+              description: 'Analisar licitação com IA',
               inputSchema: {
                 type: 'object',
                 properties: {
-                  period: { type: 'string', description: '7d, 30d, 90d, 1y' }
-                }
-              }
-            },
-            {
-              name: 'getSubscription',
-              description: 'Informações de assinatura e planos',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  user_id: { type: 'string', description: 'ID do usuário' }
-                }
+                  id: { type: 'string', description: 'ID da licitação' },
+                  texto: { type: 'string', description: 'Texto do edital' }
+                },
+                required: ['id', 'texto']
               }
             }
           ]
@@ -417,31 +206,17 @@ serve(async (req) => {
         const toolName = mcpRequest.params?.name
         const toolParams = mcpRequest.params?.arguments || {}
 
-        console.log('Calling tool:', toolName, 'with params:', toolParams)
-
         if (tools[toolName]) {
-          try {
-            const result = await tools[toolName](toolParams)
-            response.result = {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(result, null, 2)
-                }
-              ]
-            }
-          } catch (error) {
-            console.error('Tool error:', error)
-            response.error = {
-              code: -32603,
-              message: error.message
-            }
+          response.result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(await tools[toolName](toolParams), null, 2)
+              }
+            ]
           }
         } else {
-          response.error = {
-            code: -32601,
-            message: `Tool '${toolName}' not found`
-          }
+          response.error = `Tool '${toolName}' not found`
         }
         break
 
@@ -459,13 +234,9 @@ serve(async (req) => {
         break
 
       default:
-        response.error = {
-          code: -32601,
-          message: `Unknown method: ${mcpRequest.method}`
-        }
+        response.error = `Unknown method: ${mcpRequest.method}`
     }
 
-    console.log('MCP Response:', response)
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
@@ -473,12 +244,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('MCP API Error:', error)
     return new Response(JSON.stringify({
-      jsonrpc: '2.0',
-      id: null,
-      error: {
-        code: -32603,
-        message: error.message
-      }
+      error: error.message
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

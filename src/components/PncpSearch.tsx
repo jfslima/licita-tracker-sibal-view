@@ -6,11 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { usePncp } from '@/hooks/usePncp';
 import { useToast } from '@/hooks/use-toast';
-import { statusLabels } from '@/lib/status-map';
-import { PncpDocs } from './PncpDocs';
 
 export function PncpSearch() {
   const { loading, error, editais, totalPaginas, buscarEditais, limparEditais, filtros, carregarFiltros } = usePncp();
@@ -59,10 +56,12 @@ export function PncpSearch() {
   };
 
   const construirLinkPncp = (edital: any) => {
-    // Usar item_url que vem da API do PNCP - sempre presente
-    return edital.item_url.startsWith('http') 
-      ? edital.item_url 
-      : `https://pncp.gov.br${edital.item_url}`;
+    // Usar item_url que vem da API do PNCP
+    if (edital.item_url) {
+      return `https://pncp.gov.br${edital.item_url}`;
+    }
+    // Fallback caso não tenha item_url
+    return `https://pncp.gov.br/app/editais/${edital.numero_controle_pncp || edital.id}`;
   };
 
   const copiarNumeroControle = async (numeroControle: string) => {
@@ -143,7 +142,11 @@ export function PncpSearch() {
                 {filtros.status && filtros.status.length > 0 ? (
                   filtros.status.map((statusOption: string) => (
                     <SelectItem key={statusOption} value={statusOption}>
-                      {statusLabels[statusOption] || statusOption}
+                      {statusOption === 'recebendo_proposta' ? 'Recebendo Proposta' :
+                       statusOption === 'divulgado' ? 'Divulgado' :
+                       statusOption === 'concluido' ? 'Concluído' :
+                       statusOption === 'vigente' ? 'Vigente' :
+                       statusOption}
                     </SelectItem>
                   ))
                 ) : (
@@ -268,7 +271,7 @@ export function PncpSearch() {
                     )}
                   </div>
                   
-                  <div className="mt-3 pt-3 border-t flex gap-2">
+                  <div className="mt-3 pt-3 border-t">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -278,21 +281,6 @@ export function PncpSearch() {
                       <ExternalLink className="h-3 w-3" />
                       Ver no PNCP
                     </Button>
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="flex items-center gap-2">
-                          <FileText className="h-3 w-3" />
-                          Anexos
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Documentos do Edital</DialogTitle>
-                        </DialogHeader>
-                        <PncpDocs pncpId={edital.numero_controle_pncp || edital.id} />
-                      </DialogContent>
-                    </Dialog>
                   </div>
                 </CardContent>
               </Card>
