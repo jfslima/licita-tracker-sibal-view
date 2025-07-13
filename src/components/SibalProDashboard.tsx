@@ -51,7 +51,7 @@ interface SubscriptionPlan {
   features: string[];
 }
 
-export function SibalProDashboard() {
+function SibalProDashboard() {
   const { callTool, loading, error } = useMcp();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
@@ -701,3 +701,5 @@ export function SibalProDashboard() {
     </div>
   );
 }
+
+export { SibalProDashboard };
