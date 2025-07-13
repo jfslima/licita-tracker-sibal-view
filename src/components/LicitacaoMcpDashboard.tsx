@@ -45,7 +45,7 @@ export function LicitacaoMcpDashboard() {
         pagina: '1',
         tam_pagina: '20',
         ordenacao: '-data',
-        status: 'aberta' // Filtro obrigatório conforme API PNCP
+        status: 'recebendo_proposta' // Usar status válido da API PNCP
       });
 
       if (searchTerm.trim()) {
