@@ -68,7 +68,7 @@ Responda sempre de forma estruturada, clara e baseada na legislação brasileira
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           messages: conversationMessages,
-          model: 'llama-3.1-70b-versatile'
+          model: 'meta-llama/llama-4-maverick-17b-128e-instruct'
         }
       });
 
