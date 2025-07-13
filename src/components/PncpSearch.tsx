@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Search, Calendar, Building, FileText, ExternalLink, Loader2, AlertCircle, Copy, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,25 +10,19 @@ import { usePncp } from '@/hooks/usePncp';
 import { useToast } from '@/hooks/use-toast';
 
 export function PncpSearch() {
-  const { loading, error, editais, totalPaginas, buscarEditais, limparEditais, filtros, carregarFiltros } = usePncp();
+  const { loading, error, editais, totalPaginas, buscarEditais, limparEditais } = usePncp();
   const { toast } = useToast();
   const [palavraChave, setPalavraChave] = useState('');
   const [status, setStatus] = useState('recebendo_proposta');
-  const [tipoDocumento, setTipoDocumento] = useState('edital');
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    carregarFiltros(tipoDocumento);
-  }, [tipoDocumento, carregarFiltros]);
 
   const handleBuscar = async (novaPagina = 1) => {
     setPaginaAtual(novaPagina);
     await buscarEditais({
       pagina: novaPagina,
       status,
-      palavraChave: palavraChave.trim() || undefined,
-      tipoDocumento
+      palavraChave: palavraChave.trim() || undefined
     });
   };
 
@@ -55,13 +49,8 @@ export function PncpSearch() {
     }).format(valor);
   };
 
-  const construirLinkPncp = (edital: any) => {
-    // Usar item_url que vem da API do PNCP
-    if (edital.item_url) {
-      return `https://pncp.gov.br${edital.item_url}`;
-    }
-    // Fallback caso não tenha item_url
-    return `https://pncp.gov.br/app/editais/${edital.numero_controle_pncp || edital.id}`;
+  const construirLinkPncp = (itemUrl: string) => {
+    return `https://pncp.gov.br${itemUrl}`;
   };
 
   const copiarNumeroControle = async (numeroControle: string) => {
@@ -111,20 +100,7 @@ export function PncpSearch() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Tipo de Documento */}
-            <Select value={tipoDocumento} onValueChange={setTipoDocumento}>
-              <SelectTrigger>
-                <SelectValue placeholder="Tipo de Documento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="edital">Editais</SelectItem>
-                <SelectItem value="ata">Atas de Registro</SelectItem>
-                <SelectItem value="contrato">Contratos</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Campo de busca */}
+          <div className="flex gap-2">
             <Input
               placeholder="Digite palavras-chave (ex: exército, saúde, TI)..."
               value={palavraChave}
@@ -132,32 +108,15 @@ export function PncpSearch() {
               onKeyPress={(e) => e.key === 'Enter' && handleBuscar()}
               className="flex-1"
             />
-
-            {/* Status - usando filtros dinâmicos quando disponíveis */}
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
+              <SelectTrigger className="w-48">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {filtros.status && filtros.status.length > 0 ? (
-                  filtros.status.map((statusOption: string) => (
-                    <SelectItem key={statusOption} value={statusOption}>
-                      {statusOption === 'recebendo_proposta' ? 'Recebendo Proposta' :
-                       statusOption === 'divulgado' ? 'Divulgado' :
-                       statusOption === 'concluido' ? 'Concluído' :
-                       statusOption === 'vigente' ? 'Vigente' :
-                       statusOption}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <>
-                    <SelectItem value="recebendo_proposta">Recebendo Proposta</SelectItem>
-                    <SelectItem value="divulgado">Divulgado</SelectItem>
-                    <SelectItem value="concluido">Concluído</SelectItem>
-                    <SelectItem value="vigente">Vigente</SelectItem>
-                  </>
-                )}
-                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="recebendo_proposta">Recebendo Proposta</SelectItem>
+                <SelectItem value="divulgado">Divulgado</SelectItem>
+                <SelectItem value="concluido">Concluído</SelectItem>
+                <SelectItem value="">Todos</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -275,7 +234,7 @@ export function PncpSearch() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => abrirComAviso(construirLinkPncp(edital))}
+                      onClick={() => abrirComAviso(edital.url_documento || `https://pncp.gov.br/app/editais/${edital.id}`)}
                       className="flex items-center gap-2"
                     >
                       <ExternalLink className="h-3 w-3" />
