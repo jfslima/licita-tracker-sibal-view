@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Calendar, Building, FileText, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Calendar, Building, FileText, ExternalLink, Loader2, AlertCircle, Copy, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,12 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePncp } from '@/hooks/usePncp';
+import { useToast } from '@/hooks/use-toast';
 
 export function PncpSearch() {
   const { loading, error, editais, totalPaginas, buscarEditais, limparEditais } = usePncp();
+  const { toast } = useToast();
   const [palavraChave, setPalavraChave] = useState('');
   const [status, setStatus] = useState('aberta');
   const [paginaAtual, setPaginaAtual] = useState(1);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleBuscar = async (novaPagina = 1) => {
     setPaginaAtual(novaPagina);
@@ -50,8 +53,42 @@ export function PncpSearch() {
     return `https://pncp.gov.br${itemUrl}`;
   };
 
+  const copiarNumeroControle = async (numeroControle: string) => {
+    try {
+      await navigator.clipboard.writeText(numeroControle);
+      setCopiedId(numeroControle);
+      toast({
+        title: "Copiado!",
+        description: "Número de controle copiado para a área de transferência",
+      });
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível copiar o número de controle",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const abrirComAviso = (url: string) => {
+    toast({
+      title: "Redirecionando para PNCP",
+      description: "Se houver erro, é instabilidade temporária do portal.",
+    });
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="space-y-6">
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Atenção:</strong> O portal PNCP pode apresentar instabilidades temporárias. 
+          Se houver erro ao visualizar editais, é uma limitação do portal oficial, não do nosso sistema.
+          Você pode copiar o número de controle clicando sobre ele para pesquisar diretamente no PNCP.
+        </AlertDescription>
+      </Alert>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -172,9 +209,14 @@ export function PncpSearch() {
                         <span>Prazo: {formatarData(edital.data_fim_vigencia)}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => copiarNumeroControle(edital.numero_controle_pncp)}>
                       <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span>Controle: {edital.numero_controle_pncp}</span>
+                      <span className="select-all">Controle: {edital.numero_controle_pncp}</span>
+                      {copiedId === edital.numero_controle_pncp ? (
+                        <CheckCircle className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <Copy className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs">
@@ -192,17 +234,11 @@ export function PncpSearch() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      asChild
+                      onClick={() => abrirComAviso(construirLinkPncp(edital.item_url))}
+                      className="flex items-center gap-2"
                     >
-                      <a 
-                        href={construirLinkPncp(edital.item_url)} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2"
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        Ver no PNCP
-                      </a>
+                      <ExternalLink className="h-3 w-3" />
+                      Ver no PNCP
                     </Button>
                   </div>
                 </CardContent>
