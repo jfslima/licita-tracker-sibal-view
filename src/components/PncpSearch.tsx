@@ -13,7 +13,7 @@ export function PncpSearch() {
   const { loading, error, editais, totalPaginas, buscarEditais, limparEditais } = usePncp();
   const { toast } = useToast();
   const [palavraChave, setPalavraChave] = useState('');
-  const [status, setStatus] = useState('aberta');
+  const [status, setStatus] = useState('recebendo_proposta');
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -113,9 +113,9 @@ export function PncpSearch() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="aberta">Recebendo Proposta</SelectItem>
-                <SelectItem value="julgamento">Em Julgamento</SelectItem>
-                <SelectItem value="encerrada">Encerrada</SelectItem>
+                <SelectItem value="recebendo_proposta">Recebendo Proposta</SelectItem>
+                <SelectItem value="divulgado">Divulgado</SelectItem>
+                <SelectItem value="concluido">Concluído</SelectItem>
                 <SelectItem value="">Todos</SelectItem>
               </SelectContent>
             </Select>
@@ -182,7 +182,7 @@ export function PncpSearch() {
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1">
                       <CardTitle className="text-base leading-tight">
-                        {edital.title}
+                        {edital.titulo}
                       </CardTitle>
                       <CardDescription className="mt-1">
                         <div className="flex items-center gap-1">
@@ -190,29 +190,29 @@ export function PncpSearch() {
                           {edital.orgao_nome}
                         </div>
                       </CardDescription>
-                      {edital.description && (
+                      {edital.objeto && (
                         <CardDescription className="mt-2 text-xs">
-                          {edital.description}
+                          {edital.objeto}
                         </CardDescription>
                       )}
                     </div>
                     <Badge variant="secondary">
-                      {edital.modalidade_licitacao_nome}
+                      {edital.modalidade_nome || `Modalidade ${edital.modalidade_codigo}`}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                    {edital.data_fim_vigencia && (
+                    {edital.data_fim_proposta && (
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>Prazo: {formatarData(edital.data_fim_vigencia)}</span>
+                        <span>Prazo: {formatarData(edital.data_fim_proposta)}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => copiarNumeroControle(edital.numero_controle_pncp)}>
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => copiarNumeroControle(edital.id)}>
                       <FileText className="h-4 w-4 text-muted-foreground" />
-                      <span className="select-all">Controle: {edital.numero_controle_pncp}</span>
-                      {copiedId === edital.numero_controle_pncp ? (
+                      <span className="select-all">ID: {edital.id}</span>
+                      {copiedId === edital.id ? (
                         <CheckCircle className="h-3 w-3 text-green-600" />
                       ) : (
                         <Copy className="h-3 w-3 text-muted-foreground hover:text-primary" />
@@ -220,12 +220,12 @@ export function PncpSearch() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs">
-                        <Badge variant="outline">{edital.uf}</Badge> {edital.municipio_nome}
+                        <Badge variant="outline">{edital.uf}</Badge> {edital.municipio_nome || 'Município não informado'}
                       </span>
                     </div>
-                    {edital.valor_global && (
+                    {edital.valor_estimado && (
                       <div className="text-sm font-medium">
-                        Valor: {formatarValor(edital.valor_global)}
+                        Valor: {formatarValor(edital.valor_estimado)}
                       </div>
                     )}
                   </div>
@@ -234,7 +234,7 @@ export function PncpSearch() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => abrirComAviso(construirLinkPncp(edital.item_url))}
+                      onClick={() => abrirComAviso(edital.url_documento || `https://pncp.gov.br/app/editais/${edital.id}`)}
                       className="flex items-center gap-2"
                     >
                       <ExternalLink className="h-3 w-3" />
