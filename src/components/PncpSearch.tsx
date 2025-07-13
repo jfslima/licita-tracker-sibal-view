@@ -6,8 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { usePncp } from '@/hooks/usePncp';
 import { useToast } from '@/hooks/use-toast';
+import { statusLabels } from '@/lib/status-map';
+import { PncpDocs } from './PncpDocs';
 
 export function PncpSearch() {
   const { loading, error, editais, totalPaginas, buscarEditais, limparEditais, filtros, carregarFiltros } = usePncp();
@@ -142,11 +145,7 @@ export function PncpSearch() {
                 {filtros.status && filtros.status.length > 0 ? (
                   filtros.status.map((statusOption: string) => (
                     <SelectItem key={statusOption} value={statusOption}>
-                      {statusOption === 'recebendo_proposta' ? 'Recebendo Proposta' :
-                       statusOption === 'divulgado' ? 'Divulgado' :
-                       statusOption === 'concluido' ? 'Concluído' :
-                       statusOption === 'vigente' ? 'Vigente' :
-                       statusOption}
+                      {statusLabels[statusOption] || statusOption}
                     </SelectItem>
                   ))
                 ) : (
@@ -271,7 +270,7 @@ export function PncpSearch() {
                     )}
                   </div>
                   
-                  <div className="mt-3 pt-3 border-t">
+                  <div className="mt-3 pt-3 border-t flex gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -281,6 +280,21 @@ export function PncpSearch() {
                       <ExternalLink className="h-3 w-3" />
                       Ver no PNCP
                     </Button>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                          <FileText className="h-3 w-3" />
+                          Anexos
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Documentos do Edital</DialogTitle>
+                        </DialogHeader>
+                        <PncpDocs pncpId={edital.numero_controle_pncp || edital.id} />
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </CardContent>
               </Card>
