@@ -72,10 +72,11 @@ serve(async (req) => {
     const requestBody = {
       model: model,
       messages: filteredMessages,
-      max_tokens: 500,
-      temperature: 0.1,
-      top_p: 0.9,
-      stream: false
+      max_completion_tokens: 2024,
+      temperature: 0.2,
+      top_p: 1,
+      stream: false,
+      stop: null
     }
 
     console.log('Sending request to Groq API...')
