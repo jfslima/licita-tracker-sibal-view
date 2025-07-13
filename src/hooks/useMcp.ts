@@ -19,9 +19,7 @@ interface UseMcpReturn {
   listResources: <T = any>(type: string, query?: string) => Promise<T[] | null>;
 }
 
-const MCP_ENDPOINT = import.meta.env.DEV 
-  ? 'http://localhost:3000/mcp'
-  : '/mcp';
+const MCP_ENDPOINT = '/functions/v1/mcp-api';
 
 export function useMcp(): UseMcpReturn {
   const [loading, setLoading] = useState(false);

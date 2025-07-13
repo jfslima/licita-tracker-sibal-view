@@ -7,13 +7,21 @@ const corsHeaders = {
 }
 
 interface McpRequest {
+  jsonrpc: string
+  id: number
   method: string
   params?: any
 }
 
 interface McpResponse {
+  jsonrpc: string
+  id: number
   result?: any
-  error?: string
+  error?: {
+    code: number
+    message: string
+    data?: any
+  }
 }
 
 // Initialize Supabase
@@ -81,7 +89,7 @@ const tools = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+          model: 'llama-3.1-70b-versatile',
           messages: [
             {
               role: 'system',
@@ -156,7 +164,26 @@ serve(async (req) => {
     }
 
     const mcpRequest: McpRequest = await req.json()
-    let response: McpResponse = {}
+    
+    // Validate JSON-RPC 2.0 format
+    if (mcpRequest.jsonrpc !== '2.0' || typeof mcpRequest.id !== 'number') {
+      return new Response(JSON.stringify({
+        jsonrpc: '2.0',
+        id: mcpRequest.id || null,
+        error: {
+          code: -32600,
+          message: 'Invalid Request'
+        }
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    let response: McpResponse = {
+      jsonrpc: '2.0',
+      id: mcpRequest.id
+    }
 
     switch (mcpRequest.method) {
       case 'tools/list':
@@ -207,16 +234,27 @@ serve(async (req) => {
         const toolParams = mcpRequest.params?.arguments || {}
 
         if (tools[toolName]) {
-          response.result = {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(await tools[toolName](toolParams), null, 2)
-              }
-            ]
+          try {
+            const result = await tools[toolName](toolParams)
+            response.result = {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
+                }
+              ]
+            }
+          } catch (error) {
+            response.error = {
+              code: -32603,
+              message: error.message
+            }
           }
         } else {
-          response.error = `Tool '${toolName}' not found`
+          response.error = {
+            code: -32601,
+            message: `Tool '${toolName}' not found`
+          }
         }
         break
 
@@ -234,7 +272,10 @@ serve(async (req) => {
         break
 
       default:
-        response.error = `Unknown method: ${mcpRequest.method}`
+        response.error = {
+          code: -32601,
+          message: `Unknown method: ${mcpRequest.method}`
+        }
     }
 
     return new Response(JSON.stringify(response), {
