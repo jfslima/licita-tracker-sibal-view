@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      licitacoes: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          id: string
+          objeto: string
+          prazo: string | null
+          raw_data: Json | null
+          resumo_ia: string | null
+          valor: number | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          objeto: string
+          prazo?: string | null
+          raw_data?: Json | null
+          resumo_ia?: string | null
+          valor?: number | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          objeto?: string
+          prazo?: string | null
+          raw_data?: Json | null
+          resumo_ia?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

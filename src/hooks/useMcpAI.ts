@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 // Define tipos para mensagens
 export interface Message {
@@ -64,7 +65,7 @@ export function useMcpAI() {
     }]);
   }, []);
 
-  const sendMessage = async (content: string, context?: string) => {
+  const sendMessage = useCallback(async (content: string, context?: string) => {
     if (!content.trim()) return;
     
     const newUserMessage: Message = {
@@ -112,6 +113,7 @@ export function useMcpAI() {
       };
       
       setMessages(prev => [...prev, assistantMessage]);
+
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       toast({
@@ -122,7 +124,7 @@ export function useMcpAI() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const summarizeDocument = async (text: string, type: string) => {
     if (!text.trim()) return;
