@@ -83,6 +83,78 @@ const tools = {
       console.error('Erro ao gerar análise:', error);
       return 'Erro ao processar a análise. Verifique a configuração da API.';
     }
+  },
+
+  async chat_with_ai(params: { 
+    messages: Array<{role: string; content: string}>;
+    mode?: string;
+    documentContent?: string;
+    analysisType?: string;
+  }) {
+    try {
+      const { messages, mode = 'consultant', documentContent, analysisType } = params;
+      
+      // Preparar o sistema de prompt baseado no modo
+      let systemPrompt = 'Você é um assistente útil e preciso.';
+      
+      if (mode === 'consultant') {
+        systemPrompt = `Você é um consultor especializado em licitações públicas com 20 anos de experiência. 
+          Forneça análises jurídicas precisas, interpretações de cláusulas contratuais e orientações estratégicas.
+          Seja técnico mas acessível, sempre citando a legislação aplicável (Lei 8.666/93, Lei 14.133/21).`;
+      } else if (mode === 'teacher') {
+        systemPrompt = `Você é um professor universitário especializado em direito administrativo e licitações.
+          Explique conceitos de forma didática, use exemplos e esclareça dúvidas com paciência.
+          Cite legislação, jurisprudência e doutrina relevantes para enriquecer suas explicações.`;
+      } else if (mode === 'analyst') {
+        systemPrompt = `Você é um analista de dados especializado em licitações governamentais.
+          Analise tendências, identifique padrões e forneça insights baseados em dados.
+          Seja objetivo e prático em suas recomendações.`;
+      }
+      
+      // Adicionar o system message ao início se não foi fornecido
+      let finalMessages: any[] = messages[0]?.role === 'system' 
+        ? [...messages] 
+        : [{ role: 'system', content: systemPrompt }, ...messages];
+        
+      // Se houver conteúdo de documento para análise
+      if (documentContent && analysisType) {
+        const analysisPrompt = `Analise o seguinte edital de licitação e forneça: 
+          ${analysisType === 'summary' ? 'um resumo conciso dos principais pontos' : ''}
+          ${analysisType === 'risks' ? 'os principais riscos e pontos de atenção' : ''}
+          ${analysisType === 'opportunities' ? 'as principais oportunidades e vantagens competitivas' : ''}
+          ${analysisType === 'full' ? 'uma análise completa incluindo resumo, riscos, oportunidades e recomendações' : ''}
+          
+          DOCUMENTO:
+          ${documentContent}`;
+          
+        finalMessages.push({ role: 'user', content: analysisPrompt });
+      }
+
+      // Converter para o formato correto para a API do OpenAI
+      const typedMessages = finalMessages.map(msg => ({
+        role: msg.role as 'system' | 'user' | 'assistant',
+        content: msg.content
+      }));
+
+      // Fazer a chamada à API do Groq usando o modelo correto
+      const response = await openai.chat.completions.create({
+        model: 'meta-llama/llama-4-maverick-17b-128e-instruct',
+        messages: typedMessages,
+        temperature: 0.2,
+        max_tokens: 2048,
+        top_p: 1,
+      });
+
+
+      return {
+        content: response.choices[0].message.content,
+        model: response.model,
+        usage: response.usage
+      };
+    } catch (error) {
+      console.error('Erro ao processar solicitação do Groq:', error);
+      throw new Error(`Erro ao processar solicitação do Groq: ${error instanceof Error ? error.message : 'Desconhecido'}`);
+    }
   }
 };
 
@@ -163,6 +235,19 @@ app.post('/mcp', async (request, reply) => {
                   company_profile: { type: 'string', description: 'Perfil da empresa' }
                 },
                 required: ['text', 'company_profile']
+              }
+            },
+            {
+              name: 'chat_with_ai',
+              description: 'Conversa com um modelo de linguagem',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  messages: { type: 'array', items: { type: 'object', properties: { role: { type: 'string' }, content: { type: 'string' } } } },
+                  mode: { type: 'string', description: 'Modo de conversação' },
+                  documentContent: { type: 'string', description: 'Conteúdo do documento para análise' },
+                  analysisType: { type: 'string', description: 'Tipo de análise' }
+                }
               }
             }
           ]

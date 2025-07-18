@@ -1,18 +1,26 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Search, FileText, FileCheck, Loader2, Filter } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, FileText, FileCheck, Loader2, Filter, Calendar, Download, Bell, Settings, Plus, Eye, Clock, DollarSign, Building, MapPin, User, TrendingUp, AlertCircle, CheckCircle, BarChart3, Brain, Workflow, Upload, Target, MessageSquare } from 'lucide-react';
 import { LicitacaoTable } from './LicitacaoTable';
 import { FilterPanel } from './FilterPanel';
 import { AIChat } from './AIChat';
 import { AIButton } from './AIButton';
+import { AIAssistant } from './AIAssistant';
+import { AdvancedDashboard } from './AdvancedDashboard';
+import { WorkflowManager } from './WorkflowManager';
+import { DocumentAnalyzer } from './DocumentAnalyzer';
+import { NotificationCenter } from './NotificationCenter';
+import { licitationApiIntegration } from '@/services/licitationApiIntegration';
+import { advancedLicitationAnalyzer } from '@/services/advancedLicitationAnalyzer';
+import { notificationSystem } from '@/services/notificationSystem';
+import { workflowAutomation } from '@/services/workflowAutomation';
+import { camelizeKeys } from '../utils/camelizeKeys';
 import { useToast } from '@/hooks/use-toast';
+import { SearchForm } from './SearchForm';
 
 // Tipos de documento disponíveis
 const tiposDocumento = [
@@ -41,11 +49,6 @@ const statusOptions = {
   ],
 };
 
-// Utility function para converter snake_case para camelCase
-const toCamel = (str: string) => str.replace(/_([a-z])/g, (_, g) => g.toUpperCase());
-const camelizeKeys = (obj: any) =>
-  Object.fromEntries(Object.entries(obj).map(([k, v]) => [toCamel(k), v]));
-
 export function LicitacaoSystem() {
   const [tipoDoc, setTipoDoc] = useState('edital');
   const [status, setStatus] = useState(statusOptions.edital[0].value);
@@ -54,164 +57,128 @@ export function LicitacaoSystem() {
   const [filters, setFilters] = useState<any>({});
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [rowCount, setRowCount] = useState(0);
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingFilters, setLoadingFilters] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [aiDocumentContext, setAiDocumentContext] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [selectedLicitation, setSelectedLicitation] = useState(null);
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    opportunities: 0,
+    workflows: 0,
+    notifications: 0
+  });
+  const abortController = useRef(new AbortController());
   
   const { toast } = useToast();
 
-  // Carrega filtros quando muda o tipo de documento
+  // Carrega filtros e dados dos serviços quando muda o tipo de documento
   useEffect(() => {
     const loadFilters = async () => {
-      setLoadingFilters(true);
       try {
+        await licitationApiIntegration.initialize();
+        notificationSystem.initialize();
+        workflowAutomation.initialize();
+        
         const response = await fetch(`https://pncp.gov.br/api/search/filters?tipos_documento=${tipoDoc}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
         setFilterOptions(camelizeKeys(data));
+        
+        const workflows = workflowAutomation.getWorkflows();
+        const notifications = notificationSystem.getNotifications('default');
+        const activeWorkflows = workflows.filter(w => w.status === 'active');
+        const unreadNotifications = notifications.filter(n => !n.read);
+        
+        setStats(prev => ({
+          ...prev,
+          workflows: activeWorkflows.length,
+          notifications: unreadNotifications.length
+        }));
       } catch (error) {
-        console.error('Erro ao carregar filtros:', error);
         toast({
           title: "Erro",
           description: "Não foi possível carregar os filtros. Verifique sua conexão.",
           variant: "destructive",
         });
-      } finally {
-        setLoadingFilters(false);
       }
     };
 
     loadFilters();
-    // Reset quando muda tipo
-    setStatus(statusOptions[tipoDoc as keyof typeof statusOptions][0].value);
+    setStatus(statusOptions[tipoDoc][0].value);
     setFilters({});
-    setRows([]);
     setPage(0);
-  }, [tipoDoc, toast]);
+  }, [tipoDoc]);
 
-  // Monta parâmetros da consulta
   const buildParams = useCallback(() => {
-    const params: any = {
+    const params = {
       tipos_documento: tipoDoc,
       status: status === 'todos' ? undefined : status,
       ordenacao: '-data',
       pagina: page + 1,
       tam_pagina: pageSize,
+      q: keyword.trim() || undefined,
+      ...filters
     };
-    
-    if (keyword.trim()) {
-      params.q = keyword.trim();
-    }
-    
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        params[key] = value;
-      }
-    });
-    
-    // Remove parâmetros undefined
-    Object.keys(params).forEach(key => {
-      if (params[key] === undefined) {
-        delete params[key];
-      }
-    });
-    
+    Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
     return params;
   }, [tipoDoc, status, keyword, filters, page, pageSize]);
 
-  // Função de busca
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      const params = buildParams();
-      const queryString = new URLSearchParams(params).toString();
-      const url = `https://pncp.gov.br/api/search/?${queryString}`;
-      
-      console.log('Fazendo consulta:', url);
-      
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Dados recebidos:', data);
-      
-      // Corrigindo o mapeamento dos dados - a API retorna em 'items'
-      const resultados = data.items || data.conteudo || data.resultados || [];
-      
-      // Processando os dados para que tenham IDs únicos e campos consistentes
+    abortController.current.abort();
+    abortController.current = new AbortController();
+    const params = buildParams();
+    const queryString = new URLSearchParams(params).toString();
+    const url = `https://pncp.gov.br/api/search/?${queryString}`;
+    const response = await fetch(url, { signal: abortController.current.signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return response.json();
+  };
+
+  const { data: queryData, isLoading, isError, refetch } = useQuery({
+    queryKey: ['pncpData', tipoDoc, status, keyword, filters, page, pageSize],
+    queryFn: fetchData,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (queryData) {
+      const resultados = queryData.items || [];
       const processedRows = resultados.map((item, index) => ({
         ...item,
-        id: item.id || item.uid || `${item.numero_controle_pncp || index}`,
+        id: item.id || `${index}`,
         numeroProcesso: item.numero_controle_pncp || item.numeroProcesso,
         objeto: item.description || item.objeto,
         orgao: item.orgao_nome || item.orgao,
-        dataPublicacao: item.data_publicacao_pncp ? 
-          new Date(item.data_publicacao_pncp).toLocaleDateString('pt-BR') : 
-          item.dataPublicacao,
+        dataPublicacao: item.data_publicacao_pncp ? new Date(item.data_publicacao_pncp).toLocaleDateString('pt-BR') : item.dataPublicacao,
         status: item.situacao_nome || item.status,
         valor: item.valor_global || item.valor || '-'
       }));
-      
-      setRows(processedRows);
-      setRowCount(data.total || data.count || processedRows.length);
-      
-      toast({
-        title: "Consulta realizada",
-        description: `${processedRows.length} registros encontrados`,
-      });
-    } catch (error) {
-      console.error('Erro na busca:', error);
-      toast({
-        title: "Erro na consulta",
-        description: "Não foi possível realizar a consulta. Verifique sua conexão ou tente novamente.",
-        variant: "destructive",
-      });
-      setRows([]);
-      setRowCount(0);
-    } finally {
-      setLoading(false);
+      const activeCount = processedRows.filter(item => item.status === 'open' || item.situacao_nome === 'Recebendo Proposta').length;
+      const opportunitiesCount = processedRows.filter(item => parseFloat(item.valor) > 0 && parseFloat(item.valor) < 500000).length;
+      setStats(prev => ({ ...prev, total: processedRows.length, active: activeCount, opportunities: opportunitiesCount }));
     }
-  };
+  }, [queryData]);
+
+  if (isError) {
+    toast({ title: "Erro", description: "Falha na consulta. Tente novamente.", variant: "destructive" });
+  }
 
   const handleSearch = () => {
     setPage(0);
-    fetchData();
+    refetch();
   };
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setPage(0);
-  };
-
-  // Busca automática quando mudamos página
+  // Carrega dados iniciais
   useEffect(() => {
-    if (rows.length > 0) {
-      fetchData();
-    }
-  }, [page, pageSize]);
+    refetch();
+  }, [tipoDoc, status, page, pageSize]);
 
-  const openAIWithDocument = (document: any) => {
-    setAiDocumentContext({
-      text: `Objeto: ${document.description || document.objeto || 'N/A'}
-Órgão: ${document.orgao_nome || document.orgao || 'N/A'}
-Valor: ${document.valor_global || document.valor || 'N/A'}
-Status: ${document.situacao_nome || document.status || 'N/A'}
-Data: ${document.data_publicacao_pncp || document.dataPublicacao || 'N/A'}`,
-      type: tipoDoc,
-      title: document.description || document.objeto || 'Documento de Licitação'
-    });
+  const openAIWithDocument = (document) => {
+    setAiDocumentContext(document);
     setShowAIChat(true);
   };
 
@@ -225,190 +192,69 @@ Data: ${document.data_publicacao_pncp || document.dataPublicacao || 'N/A'}`,
 
   return (
     <div className="space-y-8 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
-      {/* Header Moderno */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 p-8 text-white shadow-2xl">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm">
-                <Search className="h-8 w-8" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold">Sistema de Licitações</h1>
-                <p className="text-blue-100 text-lg">Portal Nacional de Contratações Públicas (PNCP)</p>
-              </div>
-            </div>
-            <AIButton 
-              onClick={openGeneralAI}
-              variant="default"
-              size="lg"
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Filtros Principais */}
-      <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconComponent className="h-5 w-5 text-blue-600" />
-              <span className="text-xl">Consulta de Documentos</span>
-            </div>
+      {/* Botão flutuante de IA */}
+      <Button
+        onClick={openGeneralAI}
+        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200"
+        size="lg"
+      >
+        <Brain className="h-6 w-6 text-white" />
+      </Button>
+      
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Consulta de Documentos</CardTitle>
             <Button
+              onClick={openGeneralAI}
               variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300"
             >
-              <Filter className="h-4 w-4" />
-              Filtros Avançados
+              <Brain className="h-4 w-4" />
+              Assistente IA
             </Button>
-          </CardTitle>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Controles Principais */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="tipo-documento" className="text-sm font-medium text-gray-700">
-                Tipo de Documento
-              </Label>
-              <Select value={tipoDoc} onValueChange={setTipoDoc}>
-                <SelectTrigger className="h-11 border-2 border-gray-200 focus:border-blue-500">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {tiposDocumento.map((tipo) => {
-                    const Icon = tipo.icon;
-                    return (
-                      <SelectItem key={tipo.value} value={tipo.value}>
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
-                          {tipo.label}
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="md:col-span-3 space-y-2">
-              <Label htmlFor="keyword" className="text-sm font-medium text-gray-700">
-                Palavra-chave
-              </Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  id="keyword"
-                  placeholder="Digite palavras-chave para buscar..."
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-10 h-11 border-2 border-gray-200 focus:border-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Status */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium text-gray-700">Status</Label>
-            <RadioGroup
-              value={status}
-              onValueChange={setStatus}
-              className="flex flex-wrap gap-4"
-            >
-              {statusOptions[tipoDoc as keyof typeof statusOptions].map((option) => (
-                <div key={option.value} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option.value} id={option.value} className="border-2" />
-                  <Label htmlFor={option.value} className="cursor-pointer text-sm font-medium">
-                    {option.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </div>
-
-          {/* Filtros Avançados */}
-          {showFilters && (
-            <div className="animate-fade-in">
-              <Separator className="my-6" />
-              <FilterPanel
-                filterOptions={filterOptions}
-                filters={filters}
-                onFiltersChange={setFilters}
-                tipoDoc={tipoDoc}
-                loading={loadingFilters}
-              />
-            </div>
-          )}
-
-          {/* Botão de Busca */}
-          <div className="flex justify-center pt-4">
-            <Button 
-              onClick={handleSearch} 
-              disabled={loading}
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Consultando...
-                </>
-              ) : (
-                <>
-                  <Search className="mr-2 h-5 w-5" />
-                  Consultar Documentos
-                </>
-              )}
-            </Button>
-          </div>
+        <CardContent>
+          <SearchForm
+            tipoDoc={tipoDoc}
+            setTipoDoc={setTipoDoc}
+            status={status}
+            setStatus={setStatus}
+            keyword={keyword}
+            setKeyword={setKeyword}
+            filters={filters}
+            setFilters={setFilters}
+            filterOptions={filterOptions}
+            loadingFilters={false}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+            handleSearch={handleSearch}
+            loading={isLoading}
+            tiposDocumento={tiposDocumento}
+            statusOptions={statusOptions}
+          />
         </CardContent>
       </Card>
-
-      {/* Resultados */}
-      {rows.length > 0 && (
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-t-lg">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">Resultados da Consulta</CardTitle>
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800 px-3 py-1 text-sm font-medium">
-                  {rowCount} registros encontrados
-                </Badge>
-                <AIButton 
-                  onClick={openGeneralAI}
-                  variant="default"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <LicitacaoTable
-              data={rows}
-              tipoDoc={tipoDoc}
-              loading={loading}
-              page={page}
-              pageSize={pageSize}
-              rowCount={rowCount}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-              onAskAI={openAIWithDocument}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* AI Chat Modal */}
-      <AIChat
-        isOpen={showAIChat}
-        onClose={() => setShowAIChat(false)}
-        documentContext={aiDocumentContext}
+      <LicitacaoTable
+        data={queryData?.items || []}
+        tipoDoc={tipoDoc}
+        loading={isLoading}
+        page={page}
+        pageSize={pageSize}
+        rowCount={queryData?.total || 0}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        onAskAI={openAIWithDocument}
       />
+      {/* Componente de IA */}
+      {showAIChat && (
+        <AIChat
+          isOpen={showAIChat}
+          onClose={() => setShowAIChat(false)}
+          documentContext={aiDocumentContext}
+        />
+      )}
     </div>
   );
 }

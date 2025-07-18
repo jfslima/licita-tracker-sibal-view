@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "MCP Server para Licita Tracker",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/index.js",

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste SIBAL</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            padding: 40px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: #4CAF50;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SIBAL Teste</h1>
+        <p>Se você está vendo esta página, o servidor está funcionando!</p>
+        <div class="status">✅ Servidor Ativo</div>
+        <p style="margin-top: 30px; font-size: 1em;">
+            Acesse: <a href="/" style="color: #FFD700;">http://localhost:3000/</a>
+        </p>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('✅ Teste HTML carregado com sucesso!');
+                setInterval(() => {
+                    console.log('⏰ Servidor ativo:', new Date().toLocaleTimeString());
+                }, 5000);
+            });
+        </script>
+    </div>
+</body>
+</html>

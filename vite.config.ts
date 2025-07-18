@@ -8,7 +8,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 3000,
   },
   plugins: [
     react(),
@@ -20,4 +20,40 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      external: [
+        'puppeteer',
+        'puppeteer-core',
+        'child_process',
+        'fs',
+        'path',
+        'os',
+        'crypto',
+        'stream',
+        'util',
+        'events',
+        'buffer',
+        'querystring',
+        'url',
+        'string_decoder',
+        'http',
+        'https',
+        'zlib',
+        'net',
+        'tls',
+        'readline',
+        'worker_threads'
+      ]
+    }
+  },
+  define: {
+    global: 'globalThis',
+  },
+  optimizeDeps: {
+    exclude: [
+      'puppeteer',
+      'puppeteer-core'
+    ]
+  }
 }));

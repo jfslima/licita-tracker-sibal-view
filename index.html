@@ -19,7 +19,57 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fallback enquanto o React carrega -->
+      <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        font-family: Arial, sans-serif;
+        z-index: 9999;
+      ">
+        <h1 style="font-size: 2.5em; margin-bottom: 20px;">🔄 SIBAL Carregando...</h1>
+        <p style="font-size: 1.2em; margin-bottom: 30px;">Aguarde enquanto a aplicação inicializa</p>
+        <div style="
+          width: 50px;
+          height: 50px;
+          border: 5px solid rgba(255,255,255,0.3);
+          border-top: 5px solid white;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        "></div>
+        <style>
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+        <script>
+          console.log('🔍 Debug: HTML carregado, aguardando React...');
+          setTimeout(() => {
+            console.log('⚠️ Debug: React demorou mais de 5s para carregar');
+          }, 5000);
+        </script>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Debug adicional
+      window.addEventListener('load', () => {
+        console.log('✅ Debug: Página totalmente carregada');
+      });
+      
+      window.addEventListener('error', (e) => {
+        console.error('❌ Debug: Erro capturado:', e.error);
+      });
+    </script>
   </body>
 </html>
