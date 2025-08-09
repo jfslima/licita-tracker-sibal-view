@@ -1,0 +1,215 @@
+{
+  "name": "Alerta High Risk",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "url": "{{ $env.MCP_BACKEND_URL }}/mcp/run/fetch_notices",
+        "options": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "input",
+              "value": "{{ JSON.stringify({\"keyword\": \"drones\", \"date_from\": $now.minus({days:1}).format('YYYY-MM-DD'), \"date_to\": $now.format('YYYY-MM-DD')}) }}"
+            }
+          ]
+        }
+      },
+      "id": "fetch-notices",
+      "name": "Fetch Notices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "url": "{{ $env.MCP_BACKEND_URL }}/mcp/run/classify_risk",
+        "options": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParametersUi": {
+          "parameter": [
+            {
+              "name": "input",
+              "value": "{{ JSON.stringify({\"notice\": $json}) }}"
+            }
+          ]
+        }
+      },
+      "id": "classify-risk",
+      "name": "Classify Risk",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "{{ $json.risk_score }}",
+              "rightValue": 0.8,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "risk-filter",
+      "name": "Risk Filter",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "alerts",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "notice_id": "={{ $json.notice_id }}",
+            "title": "={{ $json.title }}",
+            "risk_score": "={{ $json.risk_score }}",
+            "alert_type": "high_risk",
+            "metadata": "={{ JSON.stringify($json) }}"
+          }
+        }
+      },
+      "id": "insert-alert",
+      "name": "Insert Alert to Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [1120, 200],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-sibal",
+          "name": "Postgres SIBAL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "{{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "🚨 *ALERTA DE ALTO RISCO* 🚨\n\n📋 *Aviso:* {{ $json.title }}\n⚠️ *Risk Score:* {{ $json.risk_score }}\n🔗 *ID:* {{ $json.notice_id }}\n\n#HighRisk #SIBAL"
+      },
+      "id": "telegram-alert",
+      "name": "Send Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [1120, 400],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-bot",
+          "name": "Telegram Bot SIBAL"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Notices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Notices": {
+      "main": [
+        [
+          {
+            "node": "Classify Risk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Risk": {
+      "main": [
+        [
+          {
+            "node": "Risk Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Risk Filter": {
+      "main": [
+        [
+          {
+            "node": "Insert Alert to Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "alerta-high-risk",
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "SIBAL"
+    },
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "2",
+      "name": "Alertas"
+    }
+  ]
+}

@@ -11,7 +11,12 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview --host 0.0.0.0 --port $PORT"
+    "test": "vitest",
+    "preview": "vite preview --host 0.0.0.0 --port $PORT",
+    "n8n:dev": "docker compose -f packages/n8n/docker-compose.yml up -d",
+    "n8n:stop": "docker compose -f packages/n8n/docker-compose.yml down",
+    "n8n:logs": "docker compose -f packages/n8n/docker-compose.yml logs -f",
+    "n8n:restart": "docker compose -f packages/n8n/docker-compose.yml restart"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
@@ -50,7 +55,7 @@
     "@supabase/auth-helpers-react": "^0.4.2",
     "@supabase/auth-ui-react": "^0.4.6",
     "@supabase/auth-ui-shared": "^0.1.8",
-    "@supabase/supabase-js": "^2.50.5"
+    "@supabase/supabase-js": "^2.50.5",
     "@tanstack/react-query": "^5.56.2",
     "axios": "^1.10.0",
     "bull": "^4.12.2",
@@ -58,10 +63,14 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
+    "cors": "^2.8.5",
     "cron": "^3.1.6",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.2.0",
     "embla-carousel-react": "^8.3.0",
+    "express": "^5.1.0",
     "fastify": "^4.29.1",
+    "http-proxy-middleware": "^3.0.5",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
     "mammoth": "^1.6.0",
@@ -103,11 +112,13 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
+    "jsdom": "^26.1.0",
     "lovable-tagger": "^1.1.7",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^7.0.3"
+    "vite": "^5.4.0",
+    "vitest": "^1.6.0"
   }
 }

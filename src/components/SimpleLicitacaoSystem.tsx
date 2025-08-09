@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Search, FileText, FileCheck, Loader2, ExternalLink, Calendar, DollarSign, Building, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { PNCP_SEARCH } from '@/config/api';
 
 // Tipos de documento disponíveis
 const tiposDocumento = [
@@ -17,23 +18,23 @@ const tiposDocumento = [
   { value: 'contrato', label: 'Contratos', icon: FileText },
 ];
 
-// Opções de status por tipo de documento
+// Opções de status por tipo de documento - usando valores corretos da API PNCP
 const statusOptions = {
   edital: [
-    { value: 'recebendo_proposta', label: 'Recebendo Proposta' },
-    { value: 'em_julgamento', label: 'Em Julgamento' },
-    { value: 'encerrada', label: 'Encerrada' },
-    { value: 'todos', label: 'Todos' },
+    { value: 'aberta', label: 'Aberta' },
+    { value: 'divulgada', label: 'Divulgada' },
+    { value: 'concluida', label: 'Concluída' },
+    { value: '', label: 'Todos' },
   ],
   ata: [
     { value: 'vigente', label: 'Vigentes' },
     { value: 'nao_vigente', label: 'Não Vigentes' },
-    { value: 'todos', label: 'Todos' },
+    { value: '', label: 'Todos' },
   ],
   contrato: [
     { value: 'vigente', label: 'Vigentes' },
     { value: 'nao_vigente', label: 'Não Vigentes' },
-    { value: 'todos', label: 'Todos' },
+    { value: '', label: 'Todos' },
   ],
 };
 
@@ -68,27 +69,23 @@ export function SimpleLicitacaoSystem() {
 
     setLoading(true);
     try {
-      // Construir parâmetros da consulta
-      const params = new URLSearchParams({
-        tipos_documento: tipoDoc,
-        q: keyword.trim(),
-        ordenacao: '-data',
-        pagina: '1',
-        tam_pagina: '20',
-      });
+      // Usar proxy local em vez da API direta do PNCP
+      const url = new URL('http://localhost:3002/api/pncp/search');
+      url.searchParams.append('tipos_documento', tipoDoc);
+      url.searchParams.append('q', keyword.trim()); // Usar 'q' em vez de 'palavra_chave'
+      url.searchParams.append('ordenacao', '-data');
+      url.searchParams.append('pagina', '1');
+      url.searchParams.append('tam_pagina', '20');
       
-      if (status !== 'todos') {
-        params.append('status', status);
+      if (status && status !== '') {
+        url.searchParams.append('status', status);
       }
-      
-      const url = `https://pncp.gov.br/api/search/?${params.toString()}`;
       console.log('🔍 Fazendo consulta:', url);
       
-      const response = await fetch(url, {
+      const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
+          'accept': 'application/json'
         },
       });
       
@@ -99,12 +96,12 @@ export function SimpleLicitacaoSystem() {
       const data = await response.json();
       console.log('📊 Dados recebidos:', data);
       
-      // Processar resultados
-      const items = data.items || data.conteudo || data.resultados || [];
+      // A API PNCP retorna os dados em 'items'
+      const items = data.items || [];
       const processedResults = items.map((item: any, index: number) => ({
         ...item,
         id: item.id || item.uid || item.numero_controle_pncp || `result_${index}`,
-        titulo: item.description || item.objeto || item.titulo || 'Sem título',
+        titulo: item.title || item.description || item.objeto || item.titulo || 'Sem título',
         orgao: item.orgao_nome || item.orgao || 'Não informado',
         dataPublicacao: item.data_publicacao_pncp ? 
           new Date(item.data_publicacao_pncp).toLocaleDateString('pt-BR') : 

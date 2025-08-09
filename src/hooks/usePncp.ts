@@ -2,49 +2,47 @@ import { useState, useCallback } from 'react';
 
 interface PncpContratacao {
   id: string;
-  titulo: string;
+  title: string;
+  description?: string;
+  titulo?: string;
   objeto?: string;
   orgao_nome: string;
-  modalidade_codigo: number;
+  modalidade_codigo?: number;
+  modalidade_licitacao_id?: string;
+  modalidade_licitacao_nome?: string;
   modalidade_nome?: string;
   data_fim_proposta?: string;
   valor_estimado?: number;
-  status: string;
+  valor_global?: number;
+  status?: string;
+  situacao_nome?: string;
   uf: string;
   municipio_nome?: string;
   url_documento?: string;
+  item_url?: string;
+  numero_controle_pncp?: string;
 }
 
 interface PncpResponse {
-  dados: PncpContratacao[];
-  total_registros: number;
-  total_paginas: number;
-  pagina_corrente: number;
+  items: PncpContratacao[];
+  total: number;
+  total_registros?: number;
+  total_paginas?: number;
+  pagina_corrente?: number;
 }
 
-interface UsePncpReturn {
-  loading: boolean;
-  error: string | null;
-  editais: PncpContratacao[];
-  totalPaginas: number;
-  buscarEditais: (params?: BuscarEditaisParams) => Promise<void>;
-  limparEditais: () => void;
-}
-
-interface BuscarEditaisParams {
-  pagina?: number;
-  palavraChave?: string;
-  status?: string;
-  uf?: string;
-}
-
-export function usePncp(): UsePncpReturn {
+export function usePncp() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editais, setEditais] = useState<PncpContratacao[]>([]);
   const [totalPaginas, setTotalPaginas] = useState(0);
 
-  const buscarEditais = useCallback(async (params: BuscarEditaisParams = {}) => {
+  const buscarEditais = useCallback(async (params: {
+    pagina?: number;
+    palavraChave?: string;
+    status?: string;
+    uf?: string;
+  } = {}) => {
     setLoading(true);
     setError(null);
 
@@ -52,20 +50,21 @@ export function usePncp(): UsePncpReturn {
       const {
         pagina = 1,
         palavraChave,
-        status = 'recebendo_proposta',
+        status = 'aberta',
         uf
       } = params;
 
+      // URL correta da API PNCP
       const url = new URL('https://pncp.gov.br/api/search/');
       url.searchParams.append('tipos_documento', 'edital');
       url.searchParams.append('pagina', pagina.toString());
       url.searchParams.append('tam_pagina', '20');
       url.searchParams.append('ordenacao', '-data');
-      
+       
       if (status) {
         url.searchParams.append('status', status);
       }
-
+      
       if (palavraChave && palavraChave.trim()) {
         url.searchParams.append('q', palavraChave.trim());
       }
@@ -85,9 +84,10 @@ export function usePncp(): UsePncpReturn {
         throw new Error(`Erro na API PNCP: ${response.status} ${response.statusText}`);
       }
 
-      const data: PncpResponse = await response.json();
+      const data = await response.json();
       
-      const editaisRecebidos = data.dados || [];
+      // A API PNCP retorna os dados em 'items'
+      const editaisRecebidos = data.items || [];
 
       if (pagina === 1) {
         setEditais(editaisRecebidos);
@@ -95,7 +95,7 @@ export function usePncp(): UsePncpReturn {
         setEditais(prev => [...prev, ...editaisRecebidos]);
       }
 
-      setTotalPaginas(data.total_paginas || Math.ceil((data.total_registros || 0) / 20));
+      setTotalPaginas(data.total_paginas || Math.ceil((data.total || 0) / 20));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao buscar editais';
       setError(errorMessage);
@@ -105,18 +105,11 @@ export function usePncp(): UsePncpReturn {
     }
   }, []);
 
-  const limparEditais = useCallback(() => {
-    setEditais([]);
-    setError(null);
-    setTotalPaginas(0);
-  }, []);
-
   return {
     loading,
     error,
     editais,
     totalPaginas,
-    buscarEditais,
-    limparEditais,
+    buscarEditais
   };
 }

@@ -3,6 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Type': 'application/json; charset=utf-8',
 }
 
 interface ChatMessage {
@@ -43,7 +44,7 @@ serve(async (req) => {
         requiresApiKey: true
       }), {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: corsHeaders
       })
     }
 
@@ -65,7 +66,7 @@ serve(async (req) => {
         success: false
       }), {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: corsHeaders
       })
     }
 
@@ -114,7 +115,7 @@ serve(async (req) => {
         details: errorText
       }), {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: corsHeaders
       })
     }
 
@@ -128,7 +129,7 @@ serve(async (req) => {
         success: false
       }), {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: corsHeaders
       })
     }
 
@@ -140,7 +141,7 @@ serve(async (req) => {
         success: false
       }), {
         status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: corsHeaders
       })
     }
 
@@ -148,7 +149,7 @@ serve(async (req) => {
       response: response,
       success: true
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: corsHeaders
     })
 
   } catch (error) {
@@ -165,7 +166,7 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     }), {
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: corsHeaders
     })
   }
 })

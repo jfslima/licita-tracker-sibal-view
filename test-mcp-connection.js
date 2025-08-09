@@ -1,15 +1,15 @@
-// Script para testar a comunicação com o servidor MCP no Railway
+// Script para testar a comunicação com o servidor MCP local no Supabase
 
 import fetch from 'node-fetch';
 
-// URL do servidor MCP no Railway
-const MCP_URL = 'https://licita-tracker-sibal-view-production.up.railway.app/mcp';
-const API_KEY = 'local-dev'; // Chave API definida no servidor MCP
+// URL do servidor MCP local no Supabase
+const MCP_URL = 'http://127.0.0.1:54321/functions/v1/mcp';
+const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'; // Chave anon do Supabase local
 
 // Função para testar o endpoint de health check
 async function testHealthEndpoint() {
   try {
-    const response = await fetch('https://licita-tracker-sibal-view-production.up.railway.app/health');
+    const response = await fetch('http://127.0.0.1:54321/functions/v1/mcp');
     const data = await response.json();
     console.log('📊 Health Check Response:', data);
     console.log('✅ Health Endpoint Test:', response.ok ? 'SUCCESS' : 'FAILED');

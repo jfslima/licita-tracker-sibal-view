@@ -547,11 +547,11 @@ export const DocumentAnalyzer: React.FC<DocumentAnalyzerProps> = ({
                         <div className="text-2xl font-bold">
                           {selectedFile.analysis.viabilityScore}%
                         </div>
-                        <Badge className={getViabilityColor(selectedFile.analysis.viabilityScore)}>
+                        <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${getViabilityColor(selectedFile.analysis.viabilityScore)}`}>
                           {selectedFile.analysis.viabilityScore >= 80 ? 'Alta' :
                            selectedFile.analysis.viabilityScore >= 60 ? 'Média' :
                            selectedFile.analysis.viabilityScore >= 40 ? 'Baixa' : 'Muito Baixa'}
-                        </Badge>
+                        </div>
                       </CardContent>
                     </Card>
                     
@@ -566,10 +566,10 @@ export const DocumentAnalyzer: React.FC<DocumentAnalyzerProps> = ({
                         <div className="text-2xl font-bold capitalize">
                           {selectedFile.analysis.competitionLevel}
                         </div>
-                        <Badge className={getCompetitionColor(selectedFile.analysis.competitionLevel)}>
+                        <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${getCompetitionColor(selectedFile.analysis.competitionLevel)}`}>
                           {selectedFile.analysis.competitionLevel === 'low' ? 'Baixa' :
                            selectedFile.analysis.competitionLevel === 'medium' ? 'Média' : 'Alta'}
-                        </Badge>
+                        </div>
                       </CardContent>
                     </Card>
                     

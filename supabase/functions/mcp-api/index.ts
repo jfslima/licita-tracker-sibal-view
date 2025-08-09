@@ -72,6 +72,9 @@ const tools = {
   async analizarLicitacao(params: { id: string; texto: string }) {
     try {
       console.log('Analyzing licitacao:', params.id)
+      const groqApiKey = Deno.env.get('GROQ_API_KEY')
+      console.log('GROQ_API_KEY available:', groqApiKey ? 'YES' : 'NO')
+      console.log('GROQ_API_KEY length:', groqApiKey ? groqApiKey.length : 0)
       
       // Chamar Groq API para análise
       const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {

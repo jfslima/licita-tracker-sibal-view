@@ -1,0 +1,89 @@
+{
+  "name": "MCP Server",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mcp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "jsCode": "// MCP Server Implementation\nconst requestData = $json.body || {};\nconst { method, params } = requestData;\n\n// Available tools\nconst tools = [\n  {\n    name: 'fetch_notices',\n    description: 'Busca editais de licitação com filtros opcionais',\n    inputSchema: {\n      type: 'object',\n      properties: {\n        query: { type: 'string', description: 'Termo de busca' },\n        limit: { type: 'number', description: 'Limite de resultados', default: 10 },\n        status: { type: 'string', description: 'Status do edital' }\n      }\n    }\n  },\n  {\n    name: 'risk_classifier',\n    description: 'Classifica o risco de um edital de licitação',\n    inputSchema: {\n      type: 'object',\n      properties: {\n        notice_content: { type: 'string', description: 'Conteúdo do edital' },\n        notice_id: { type: 'string', description: 'ID do edital' }\n      },\n      required: ['notice_content']\n    }\n  }\n];\n\n// MCP Protocol Handler\nif (method === 'tools/list') {\n  return {\n    tools: tools\n  };\n}\n\nif (method === 'tools/call') {\n  const { name: toolName, arguments: toolArgs } = params;\n  \n  try {\n    let result;\n    \n    switch (toolName) {\n      case 'fetch_notices':\n        result = {\n          notices: [\n            {\n              id: '1',\n              title: 'Edital de Exemplo',\n              description: 'Descrição do edital',\n              status: 'active',\n              deadline: '2024-02-15',\n              value: 100000\n            }\n          ],\n          total: 1\n        };\n        break;\n        \n      case 'risk_classifier':\n        const riskScore = Math.random();\n        result = {\n          risk_level: riskScore > 0.7 ? 'high' : riskScore > 0.4 ? 'medium' : 'low',\n          risk_score: riskScore,\n          risk_factors: ['Prazo curto', 'Documentação complexa'],\n          recommendations: ['Revisar documentação', 'Preparar equipe']\n        };\n        break;\n        \n      default:\n        throw new Error(`Tool '${toolName}' not found`);\n    }\n    \n    return {\n      content: [{\n        type: 'text',\n        text: JSON.stringify(result, null, 2)\n      }]\n    };\n    \n  } catch (error) {\n    return {\n      isError: true,\n      content: [{\n        type: 'text',\n        text: `Error executing tool '${toolName}': ${error.message}`\n      }]\n    };\n  }\n}\n\n// Handle other MCP methods\nif (method === 'initialize') {\n  return {\n    protocolVersion: '2024-11-05',\n    capabilities: {\n      tools: {}\n    },\n    serverInfo: {\n      name: 'SIBAL MCP Server',\n      version: '1.0.0'\n    }\n  };\n}\n\n// Default response for unknown methods\nreturn {\n  error: {\n    code: -32601,\n    message: `Method '${method}' not found`\n  }\n};"
+      },
+      "id": "code-node",
+      "name": "MCP Handler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Authorization"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-node",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "MCP Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Handler": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}

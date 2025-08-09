@@ -1,283 +1,273 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Send, Bot, User, Loader2, MessageSquare, X, FileText, Sparkles } from 'lucide-react';
 import { useMcpAI } from '@/hooks/useMcpAI';
+import { Send, Bot, User, Brain, GraduationCap, BarChart3, Sparkles, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface AIChatProps {
-  isOpen: boolean;
-  onClose: () => void;
-  documentContext?: {
-    text: string;
-    type: string;
-    title: string;
-  };
-  autoSendMessage?: string;
+  context?: any;
+  onClose?: () => void;
+  className?: string;
 }
 
-export function AIChat({ isOpen, onClose, documentContext, autoSendMessage }: AIChatProps) {
+interface Message {
+  id: string;
+  content: string;
+  sender: 'user' | 'ai';
+  timestamp: Date;
+  suggestions?: string[];
+}
+
+export function AIChat({ context, onClose, className }: AIChatProps) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      content: 'Olá! Sou sua IA especializada em licitações públicas. Como posso ajudá-lo hoje?',
+      sender: 'ai',
+      timestamp: new Date(),
+      suggestions: [
+        'Analisar uma licitação específica',
+        'Explicar processo licitatório',
+        'Gerar insights de mercado'
+      ]
+    }
+  ]);
   const [inputMessage, setInputMessage] = useState('');
-  const { messages, loading: isLoading, sendMessage, summarizeDocument, clearMessages } = useMcpAI();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const isStreaming = false; // Streaming não disponível na implementação MCP atual
+  const [mode, setMode] = useState<'consultor' | 'professor' | 'analista'>('consultor');
+  const { sendMessage, loading, isOffline } = useMcpAI();
+  const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-send message when provided
-  useEffect(() => {
-    if (autoSendMessage && isOpen) {
-      sendMessage(autoSendMessage);
-    }
-  }, [autoSendMessage, isOpen]);
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-    }
-  }, [messages]);
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [messages.length]);
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+  const handleSendMessage = useCallback(async () => {
+    if (!inputMessage.trim() || loading) return;
 
-    const message = inputMessage;
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      content: inputMessage,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
-    
-    const context = documentContext 
-      ? `Documento: ${documentContext.title}\nTipo: ${documentContext.type}\nConteúdo: ${documentContext.text}` 
-      : undefined;
 
-    await sendMessage(message, context);
-  };
+    try {
+      // Preparar mensagens para o contexto
+      const contextMessage = context ? `Contexto: ${JSON.stringify(context)}\n\n` : '';
+      const modePrompt = {
+        consultor: 'Você é um consultor especializado em licitações públicas com 20 anos de experiência.',
+        professor: 'Você é um professor universitário especializado em direito administrativo e licitações.',
+        analista: 'Você é um analista de dados especializado em métricas de licitações públicas.'
+      };
+      
+      const fullMessage = `${modePrompt[mode]}\n\n${contextMessage}${inputMessage}`;
+      
+      const response = await sendMessage(fullMessage);
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: response.content || 'Desculpe, não consegui processar sua mensagem.',
+        sender: 'ai',
+        timestamp: new Date(),
+        suggestions: [
+          'Posso ajudar com mais análises',
+          'Gostaria de explorar outros aspectos?',
+          'Tem alguma dúvida específica?'
+        ]
+      };
 
-  const handleSummarizeDocument = async () => {
-    if (!documentContext) return;
-    await summarizeDocument(documentContext.text, documentContext.type);
-  };
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Erro no chat:', error);
+      
+      // Adicionar mensagem de erro
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: isOffline 
+          ? 'Sistema offline. Verifique sua conexão e tente novamente.'
+          : 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
+        sender: 'ai',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      
+      toast({
+        title: "Erro no Chat",
+        description: "Não foi possível processar sua mensagem. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  }, [inputMessage, loading, sendMessage, context, mode, toast, isOffline]);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    setInputMessage(suggestion);
+  }, []);
+
+  const getModeIcon = (currentMode: string) => {
+    switch (currentMode) {
+      case 'consultor': return <Brain className="h-4 w-4" />;
+      case 'professor': return <GraduationCap className="h-4 w-4" />;
+      case 'analista': return <BarChart3 className="h-4 w-4" />;
+      default: return <Bot className="h-4 w-4" />;
     }
   };
 
-  if (!isOpen) return null;
+  const getModeDescription = (currentMode: string) => {
+    switch (currentMode) {
+      case 'consultor': return 'Especialista em estratégias de licitação';
+      case 'professor': return 'Educador em processos licitatórios';
+      case 'analista': return 'Analista de dados e métricas';
+      default: return 'Assistente IA';
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl border-0">
-        <CardHeader className="pb-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                <Bot className="h-6 w-6" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold">Assistente IA</span>
-                  <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                    Sibal Pro
-                  </Badge>
-                </div>
-                <p className="text-sm text-blue-100 font-normal mt-1">
-                  Especialista em licitações públicas do Brasil
-                </p>
-              </div>
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-white hover:bg-white/20">
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-          
-          {documentContext && (
-            <div className="mt-4 p-4 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-blue-200" />
-                  <div>
-                    <Badge variant="secondary" className="mb-2 bg-white/20 text-white border-white/30">
-                      {documentContext.type}
-                    </Badge>
-                    <p className="text-sm font-medium text-white">{documentContext.title}</p>
-                    <p className="text-xs text-blue-200">Documento carregado para análise</p>
-                  </div>
-                </div>
+    <Card className={`h-[600px] flex flex-col ${className}`}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            Chat com IA Especializada
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              {(['consultor', 'professor', 'analista'] as const).map((modeOption) => (
                 <Button
-                  variant="secondary"
+                  key={modeOption}
+                  variant={mode === modeOption ? 'default' : 'outline'}
                   size="sm"
-                  onClick={handleSummarizeDocument}
-                  disabled={isLoading}
-                  className="bg-white/20 text-white border-white/30 hover:bg-white/30"
+                  onClick={() => setMode(modeOption)}
+                  className="flex items-center gap-1"
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Resumir
+                  {getModeIcon(modeOption)}
+                  {modeOption.charAt(0).toUpperCase() + modeOption.slice(1)}
                 </Button>
-              </div>
+              ))}
             </div>
-          )}
-        </CardHeader>
-
-        <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
-          <div className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6">
-                {messages.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-                      <MessageSquare className="h-10 w-10 text-blue-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">
-                      Como posso ajudar hoje?
-                    </h3>
-                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                      Sou especialista em licitações públicas brasileiras. Faça perguntas sobre processos, documentos ou legislação.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => sendMessage("Como funciona o processo licitatório no Brasil?")}
-                        disabled={isLoading}
-                        className="justify-start h-auto p-4 text-left"
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">Processo Licitatório</div>
-                          <div className="text-xs text-gray-500">Como funciona no Brasil?</div>
-                        </div>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => sendMessage("Quais são os tipos de modalidades de licitação?")}
-                        disabled={isLoading}
-                        className="justify-start h-auto p-4 text-left"
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">Modalidades</div>
-                          <div className="text-xs text-gray-500">Tipos de licitação</div>
-                        </div>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => sendMessage("Como participar de uma licitação pública?")}
-                        disabled={isLoading}
-                        className="justify-start h-auto p-4 text-left"
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">Participação</div>
-                          <div className="text-xs text-gray-500">Como participar?</div>
-                        </div>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => sendMessage("Explique sobre o Portal Nacional de Contratações Públicas (PNCP)")}
-                        disabled={isLoading}
-                        className="justify-start h-auto p-4 text-left"
-                      >
-                        <div className="text-left">
-                          <div className="font-medium">PNCP</div>
-                          <div className="text-xs text-gray-500">Portal Nacional</div>
-                        </div>
-                      </Button>
-                    </div>
+            {onClose && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {getModeDescription(mode)}
+        </p>
+      </CardHeader>
+       
+      <CardContent className="flex-1 flex flex-col p-0">
+        <ScrollArea className="flex-1 px-4">
+          <div className="space-y-4 pb-4">
+            {messages.map((message) => (
+              <div key={message.id} className="space-y-2">
+                <div className={`flex items-start gap-3 ${message.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    message.sender === 'user' 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {message.sender === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {messages.map((message, index) => (
-                      <div key={index} className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        {message.role === 'assistant' && (
-                          <div className="p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
-                            <Bot className="h-5 w-5 text-blue-700" />
-                          </div>
-                        )}
-                        <div className={`max-w-[80%] p-4 rounded-2xl break-words overflow-wrap-anywhere ${
-                          message.role === 'user' 
-                            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
-                            : 'bg-gray-50 text-gray-900 border border-gray-200'
-                        }`}>
-                          <p className="whitespace-pre-wrap leading-relaxed text-sm break-words hyphens-auto">{message.content}</p>
-                          <p className="text-xs opacity-70 mt-3 flex items-center gap-1">
-                            {message.role === 'assistant' && <Bot className="h-3 w-3" />}
-                            {message.timestamp.toLocaleTimeString('pt-BR')}
-                          </p>
-                        </div>
-                        {message.role === 'user' && (
-                          <div className="p-2.5 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shrink-0">
-                            <User className="h-5 w-5 text-white" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {isStreaming && (
-                      <div className="flex gap-4 justify-start">
-                        <div className="p-2.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl shrink-0">
-                          <Bot className="h-5 w-5 text-blue-700" />
-                        </div>
-                        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-                          <div className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                            <span className="text-sm text-gray-600">Pensando...</span>
-                          </div>
-                        </div>
+                  
+                  <div className={`flex-1 space-y-2 ${message.sender === 'user' ? 'text-right' : ''}`}>
+                    <div className={`inline-block max-w-[80%] p-3 rounded-lg ${
+                      message.sender === 'user'
+                        ? 'bg-primary text-primary-foreground ml-auto'
+                        : 'bg-muted'
+                    }`}>
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                    
+                    <div className="text-xs text-muted-foreground">
+                      {message.timestamp.toLocaleTimeString()}
+                    </div>
+                    
+                    {message.suggestions && message.suggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {message.suggestions.map((suggestion, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="cursor-pointer hover:bg-muted"
+                            onClick={() => handleSuggestionClick(suggestion)}
+                          >
+                            {suggestion}
+                          </Badge>
+                        ))}
                       </div>
                     )}
                   </div>
+                </div>
+                
+                {message.id !== messages[messages.length - 1].id && (
+                  <Separator className="my-4" />
                 )}
               </div>
-            </ScrollArea>
-          </div>
-
-          <Separator />
-          
-          <div className="p-6 bg-gray-50 flex-shrink-0">
-            <div className="flex gap-3">
-              <Input
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Digite sua pergunta sobre licitações..."
-                disabled={isLoading}
-                className="flex-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-              />
-              <Button 
-                onClick={handleSendMessage} 
-                disabled={isLoading || !inputMessage.trim()}
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700 px-6"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+            ))}
             
-            {messages.length > 0 && (
-              <div className="flex justify-center mt-4">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearMessages}
-                  disabled={isLoading}
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Limpar Conversa
-                </Button>
+            {loading && (
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted text-muted-foreground flex items-center justify-center">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <div className="inline-block bg-muted p-3 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span className="text-sm text-muted-foreground">IA está pensando...</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
+            
+            <div ref={messagesEndRef} />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </ScrollArea>
+
+        <div className="p-4 border-t">
+          <div className="flex gap-2">
+            <Input
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Digite sua pergunta sobre licitações..."
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              disabled={loading}
+            />
+            <Button 
+              onClick={handleSendMessage} 
+              disabled={loading || !inputMessage.trim()}
+              size="icon"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

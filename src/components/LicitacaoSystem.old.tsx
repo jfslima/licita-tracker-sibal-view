@@ -81,7 +81,7 @@ export function LicitacaoSystem() {
         notificationSystem.initialize();
         workflowAutomation.initialize();
         
-        const response = await fetch(`https://pncp.gov.br/api/search/filters?tipos_documento=${tipoDoc}`);
+        const response = await fetch(`http://localhost:3002/api/pncp/search/filters?tipos_documento=${tipoDoc}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -132,7 +132,7 @@ export function LicitacaoSystem() {
     abortController.current = new AbortController();
     const params = buildParams();
     const queryString = new URLSearchParams(params).toString();
-    const url = `https://pncp.gov.br/api/search/?${queryString}`;
+    const url = `http://localhost:3002/api/pncp/search?${queryString}`;
     const response = await fetch(url, { signal: abortController.current.signal });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json();

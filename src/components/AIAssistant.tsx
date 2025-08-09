@@ -240,7 +240,7 @@ export function AIAssistant({ isOpen, onClose, documentContext }: AIAssistantPro
                       {documentContext && (
                         <>
                           <Badge variant="secondary" className="mb-1 bg-white/20 text-white border-white/30 text-xs">
-                            {documentContext.type.toUpperCase()}
+                            {documentContext.type?.toUpperCase() || 'DOCUMENTO'}
                           </Badge>
                           <p className="text-sm font-medium text-white">{documentContext.title}</p>
                         </>

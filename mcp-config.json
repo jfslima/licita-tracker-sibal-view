@@ -1,0 +1,382 @@
+{
+  "name": "sibal-licita-tracker-mcp-unified",
+  "version": "2.0.0",
+  "description": "Sistema MCP Unificado para análise inteligente de licitações do SIBAL",
+  "author": "SIBAL - Sistema de Informações sobre Licitações",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sibal/licita-tracker-sibal-view"
+  },
+  "mcp": {
+    "protocol_version": "1.0.0",
+    "server": {
+      "name": "sibal-licita-tracker-mcp",
+      "version": "2.0.0",
+      "description": "Servidor MCP unificado para análise de licitações com IA",
+      "capabilities": {
+        "logging": true,
+        "prompts": true,
+        "tools": true,
+        "resources": false
+      }
+    },
+    "tools": [
+      {
+        "name": "fetch_notices",
+        "description": "Busca avançada de editais com filtros semânticos",
+        "category": "search",
+        "ai_powered": true,
+        "cache_enabled": true,
+        "rate_limit": 100,
+        "timeout_ms": 10000,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Termo de busca semântica",
+              "maxLength": 500
+            },
+            "organ": {
+              "type": "string",
+              "description": "Filtro por órgão",
+              "maxLength": 200
+            },
+            "modality": {
+              "type": "string",
+              "description": "Modalidade da licitação",
+              "enum": ["pregao", "concorrencia", "tomada_precos", "convite", "concurso", "leilao"]
+            },
+            "min_value": {
+              "type": "number",
+              "description": "Valor mínimo",
+              "minimum": 0
+            },
+            "max_value": {
+              "type": "number",
+              "description": "Valor máximo",
+              "minimum": 0
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Limite de resultados",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          "required": ["query"]
+        }
+      },
+      {
+        "name": "risk_classifier",
+        "description": "Classifica risco de editais usando IA",
+        "category": "analysis",
+        "ai_powered": true,
+        "cache_enabled": true,
+        "rate_limit": 50,
+        "timeout_ms": 15000,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "notice_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID do edital"
+            }
+          },
+          "required": ["notice_id"]
+        }
+      },
+      {
+        "name": "summarize_notice",
+        "description": "Gera resumos inteligentes de editais",
+        "category": "analysis",
+        "ai_powered": true,
+        "cache_enabled": true,
+        "rate_limit": 50,
+        "timeout_ms": 20000,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "notice_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID do edital"
+            }
+          },
+          "required": ["notice_id"]
+        }
+      },
+      {
+        "name": "process_document",
+        "description": "Processa documentos de licitação",
+        "category": "processing",
+        "ai_powered": true,
+        "cache_enabled": false,
+        "rate_limit": 20,
+        "timeout_ms": 60000,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "notice_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID do edital"
+            },
+            "document_url": {
+              "type": "string",
+              "format": "uri",
+              "description": "URL do documento"
+            },
+            "document_type": {
+              "type": "string",
+              "enum": ["edital", "anexo", "ata", "contrato", "outros"],
+              "description": "Tipo do documento"
+            }
+          },
+          "required": ["notice_id", "document_url", "document_type"]
+        }
+      },
+      {
+        "name": "generate_proposal_insights",
+        "description": "Gera insights estratégicos para propostas",
+        "category": "strategy",
+        "ai_powered": true,
+        "cache_enabled": true,
+        "rate_limit": 30,
+        "timeout_ms": 25000,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "notice_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID do edital"
+            },
+            "company_profile": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                "sector": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "size": {
+                  "type": "string",
+                  "enum": ["micro", "pequena", "media", "grande"]
+                },
+                "experience_years": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "specialties": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "maxItems": 10
+                },
+                "certifications": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "maxItems": 20
+                }
+              },
+              "required": ["name", "sector", "size"]
+            }
+          },
+          "required": ["notice_id", "company_profile"]
+        }
+      },
+      {
+        "name": "monitor_deadlines",
+        "description": "Monitora prazos e gera alertas",
+        "category": "monitoring",
+        "ai_powered": false,
+        "cache_enabled": false,
+        "rate_limit": 100,
+        "timeout_ms": 5000,
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "company_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID da empresa"
+            },
+            "days_ahead": {
+              "type": "integer",
+              "description": "Dias para monitorar à frente",
+              "minimum": 1,
+              "maximum": 365,
+              "default": 30
+            }
+          },
+          "required": ["company_id"]
+        }
+      }
+    ]
+  },
+  "deployment": {
+    "platform": "supabase",
+    "runtime": "deno",
+    "function_name": "mcp",
+    "environment_variables": {
+      "required": [
+        "GROQ_API_KEY"
+      ],
+      "optional": [
+        "MCP_LOG_LEVEL",
+        "MCP_RATE_LIMIT",
+        "MCP_TIMEOUT",
+        "MCP_CACHE_TTL"
+      ]
+    },
+    "database": {
+      "migrations": [
+        "20241201000001_mcp_unified_schema.sql"
+      ],
+      "tables": [
+        "notices",
+        "user_follows",
+        "document_processing_results",
+        "proposal_insights",
+        "deadline_monitoring_results",
+        "mcp_logs"
+      ]
+    }
+  },
+  "development": {
+    "scripts": {
+      "deploy": "powershell -ExecutionPolicy Bypass -File scripts/deploy-mcp-unified.ps1",
+      "test": "powershell -ExecutionPolicy Bypass -File scripts/test-mcp-unified.ps1",
+      "dev": "supabase functions serve mcp --no-verify-jwt",
+      "logs": "supabase functions logs mcp",
+      "db-reset": "supabase db reset",
+      "db-push": "supabase db push"
+    },
+    "ports": {
+      "local_dev": 54321,
+      "function_dev": 8000
+    }
+  },
+  "monitoring": {
+    "metrics": {
+      "response_time": {
+        "warning_threshold_ms": 5000,
+        "error_threshold_ms": 10000
+      },
+      "error_rate": {
+        "warning_threshold_percent": 5,
+        "error_threshold_percent": 10
+      },
+      "token_usage": {
+        "daily_limit": 100000,
+        "warning_threshold_percent": 80
+      }
+    },
+    "alerts": {
+      "email": "admin@sibal.org.br",
+      "webhook": "https://hooks.slack.com/services/..."
+    }
+  },
+  "security": {
+    "cors": {
+      "allowed_origins": [
+        "https://licita-tracker.sibal.org.br",
+        "https://localhost:3000",
+        "http://localhost:3000"
+      ],
+      "allowed_methods": ["GET", "POST", "OPTIONS"],
+      "allowed_headers": ["Content-Type", "Authorization"]
+    },
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 100,
+      "burst_limit": 20
+    },
+    "authentication": {
+      "required": false,
+      "jwt_verification": false,
+      "api_key_required": false
+    }
+  },
+  "ai_integration": {
+    "groq": {
+      "model": "llama-3.1-70b-versatile",
+      "max_tokens": 4000,
+      "temperature": 0.1,
+      "timeout_ms": 30000,
+      "retry_attempts": 3,
+      "fallback_enabled": true
+    },
+    "caching": {
+      "enabled": true,
+      "ttl_seconds": 3600,
+      "max_size_mb": 100
+    }
+  },
+  "performance": {
+    "database": {
+      "connection_pool_size": 10,
+      "query_timeout_ms": 5000,
+      "index_optimization": true
+    },
+    "caching": {
+      "redis_enabled": false,
+      "memory_cache_enabled": true,
+      "cache_size_mb": 50
+    }
+  },
+  "logging": {
+    "level": "info",
+    "structured": true,
+    "include_request_id": true,
+    "include_user_id": true,
+    "retention_days": 30,
+    "sensitive_data_masking": true
+  },
+  "testing": {
+    "unit_tests": {
+      "framework": "deno_test",
+      "coverage_threshold": 80
+    },
+    "integration_tests": {
+      "timeout_ms": 30000,
+      "retry_attempts": 3
+    },
+    "performance_tests": {
+      "max_response_time_ms": 5000,
+      "min_success_rate_percent": 95
+    }
+  },
+  "documentation": {
+    "api_docs": "supabase/functions/mcp/README.md",
+    "migration_guide": "MIGRACAO_MCP_UNIFICADO.md",
+    "examples": "src/examples/mcp-usage-examples.ts",
+    "changelog": "CHANGELOG.md"
+  },
+  "metadata": {
+    "created_at": "2024-12-01T00:00:00Z",
+    "updated_at": "2024-12-01T00:00:00Z",
+    "tags": ["mcp", "ai", "licitacoes", "sibal", "supabase", "groq"],
+    "keywords": [
+      "model context protocol",
+      "artificial intelligence",
+      "public procurement",
+      "bid analysis",
+      "document processing",
+      "risk assessment"
+    ]
+  }
+}

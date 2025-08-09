@@ -1,5 +1,8 @@
 project_id = "ngcfavdkmlfjvcqjqftj"
 
+[db]
+major_version = 15
+
 [api]
 enabled = true
 port = 54321
@@ -10,14 +13,20 @@ max_rows = 1000
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
+additional_redirect_urls = [
+  "https://071c24f8-d369-4b32-97a1-261111a8a94e.lovableproject.com/**",
+  "https://id-preview--071c24f8-d369-4b32-97a1-261111a8a94e.lovable.app/**",
+  "https://licita-tracker-sibal-view.lovable.app/**",
+  "https://preview--licita-tracker-sibal-view.lovable.app/**"
+]
 jwt_expiry = 3600
-refresh_token_rotation_enabled = true
-security_update_password_require_reauthentication = true
 enable_signup = true
 
 [functions.mcp-api]
-verify_jwt = false
+verify_jwt = true
+
+[functions.ai-chat]
+verify_jwt = true
 
 [functions.licitacao-analyzer]
-verify_jwt = false
+verify_jwt = true

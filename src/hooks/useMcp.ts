@@ -19,9 +19,7 @@ interface UseMcpReturn {
   listResources: <T = any>(type: string, query?: string) => Promise<T[] | null>;
 }
 
-const MCP_ENDPOINT = import.meta.env.DEV 
-  ? 'http://localhost:3000/mcp'
-  : '/mcp';
+const MCP_ENDPOINT = 'https://ngcfavdkmlfjvcqjqftj.supabase.co/functions/v1/mcp-tools';
 
 export function useMcp(): UseMcpReturn {
   const [loading, setLoading] = useState(false);
@@ -39,6 +37,7 @@ export function useMcp(): UseMcpReturn {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nY2ZhdmRrbWxmanZjcWpxZnRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NzY3NzEsImV4cCI6MjA1MDU1Mjc3MX0.Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8'
         },
         body: JSON.stringify({
           jsonrpc: '2.0',

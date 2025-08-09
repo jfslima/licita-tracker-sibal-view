@@ -1,0 +1,109 @@
+{
+  "name": "SIBAL MCP Server",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "mcp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "MCP Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "sibal-mcp-server"
+    },
+    {
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// SIBAL MCP Server Implementation\nconst request = $input.all()[0].json;\nconst method = request.method || 'unknown';\nconst params = request.params || {};\n\n// MCP Tools Implementation\nconst mcpTools = {\n  // Fetch notices from PNCP\n  async fetch_notices(args) {\n    const { keyword = '', date_from, date_to, status = 'aberta' } = args;\n    \n    try {\n      // Simulate PNCP API call\n      const notices = [\n        {\n          id: '001',\n          title: `Licitação para ${keyword || 'equipamentos'}`,\n          description: 'Aquisição de equipamentos para órgão público',\n          status: status,\n          deadline: '2024-12-31',\n          value: 150000,\n          organ: 'Prefeitura Municipal',\n          modality: 'Pregão Eletrônico',\n          created_at: date_from || '2024-01-01'\n        },\n        {\n          id: '002',\n          title: `Contratação de serviços relacionados a ${keyword || 'tecnologia'}`,\n          description: 'Serviços de desenvolvimento de software',\n          status: status,\n          deadline: '2024-11-30',\n          value: 250000,\n          organ: 'Governo do Estado',\n          modality: 'Concorrência',\n          created_at: date_from || '2024-01-15'\n        }\n      ];\n      \n      return {\n        success: true,\n        data: notices,\n        total: notices.length,\n        message: `Encontradas ${notices.length} licitações`\n      };\n    } catch (error) {\n      return {\n        success: false,\n        error: error.message,\n        data: []\n      };\n    }\n  },\n\n  // Risk classification\n  async risk_classifier(args) {\n    const { notice_id, company_profile = {} } = args;\n    \n    // Simulate risk analysis\n    const riskFactors = [\n      'Prazo de entrega apertado',\n      'Valor elevado do contrato',\n      'Especificações técnicas complexas'\n    ];\n    \n    const riskLevel = Math.random() > 0.5 ? 'MEDIUM' : 'LOW';\n    const score = riskLevel === 'MEDIUM' ? 65 : 35;\n    \n    return {\n      success: true,\n      data: {\n        notice_id,\n        risk_level: riskLevel,\n        score,\n        factors: riskFactors,\n        recommendations: [\n          'Revisar cronograma de execução',\n          'Avaliar capacidade técnica da equipe',\n          'Considerar parcerias estratégicas'\n        ],\n        competitive_analysis: {\n          estimated_competitors: Math.floor(Math.random() * 10) + 3,\n          market_position: 'Favorável'\n        }\n      }\n    };\n  },\n\n  // Summarize notice\n  async summarize_notice(args) {\n    const { notice_id, content } = args;\n    \n    return {\n      success: true,\n      data: {\n        notice_id,\n        summary: 'Licitação para aquisição de equipamentos tecnológicos com prazo de entrega de 60 dias.',\n        key_points: [\n          'Valor estimado: R$ 150.000,00',\n          'Modalidade: Pregão Eletrônico',\n          'Prazo de entrega: 60 dias',\n          'Garantia mínima: 12 meses'\n        ],\n        requirements: [\n          'Certificação ISO 9001',\n          'Experiência mínima de 3 anos',\n          'Capital social mínimo'\n        ]\n      }\n    };\n  },\n\n  // Process document\n  async process_document(args) {\n    const { document_url, document_type = 'edital' } = args;\n    \n    return {\n      success: true,\n      data: {\n        document_url,\n        document_type,\n        extracted_data: {\n          title: 'Pregão Eletrônico nº 001/2024',\n          object: 'Aquisição de equipamentos de informática',\n          estimated_value: 150000,\n          deadline: '2024-12-31',\n          requirements: [\n            'Registro no CNPJ',\n            'Regularidade fiscal',\n            'Capacidade técnica'\n          ]\n        },\n        analysis: {\n          complexity: 'MEDIUM',\n          estimated_preparation_time: '5 dias',\n          success_probability: '75%'\n        }\n      }\n    };\n  },\n\n  // Generate proposal insights\n  async generate_proposal_insights(args) {\n    const { notice_id, company_data = {} } = args;\n    \n    return {\n      success: true,\n      data: {\n        notice_id,\n        insights: {\n          competitive_advantages: [\n            'Experiência no setor público',\n            'Certificações relevantes',\n            'Equipe técnica qualificada'\n          ],\n          pricing_strategy: {\n            recommended_discount: '8%',\n            market_position: 'Competitivo',\n            risk_assessment: 'Baixo'\n          },\n          proposal_structure: [\n            'Proposta técnica detalhada',\n            'Cronograma de execução',\n            'Plano de garantia e suporte',\n            'Referências de projetos similares'\n          ]\n        },\n        recommendations: [\n          'Destacar diferenciais técnicos',\n          'Apresentar cronograma otimizado',\n          'Incluir garantia estendida'\n        ]\n      }\n    };\n  },\n\n  // Monitor deadlines\n  async monitor_deadlines(args) {\n    const { days_ahead = 7 } = args;\n    \n    const upcomingDeadlines = [\n      {\n        notice_id: '001',\n        title: 'Pregão Eletrônico - Equipamentos TI',\n        deadline: '2024-12-15',\n        days_remaining: 5,\n        priority: 'HIGH',\n        status: 'pending_proposal'\n      },\n      {\n        notice_id: '002',\n        title: 'Concorrência - Serviços de Software',\n        deadline: '2024-12-20',\n        days_remaining: 10,\n        priority: 'MEDIUM',\n        status: 'in_preparation'\n      }\n    ];\n    \n    return {\n      success: true,\n      data: {\n        total_deadlines: upcomingDeadlines.length,\n        deadlines: upcomingDeadlines,\n        alerts: [\n          {\n            type: 'urgent',\n            message: 'Prazo de entrega de proposta em 5 dias',\n            notice_id: '001'\n          }\n        ]\n      }\n    };\n  }\n};\n\n// MCP Protocol Handler\nasync function handleMCPRequest(method, params) {\n  switch (method) {\n    case 'initialize':\n      return {\n        protocolVersion: '2024-11-05',\n        capabilities: {\n          tools: {},\n          logging: {},\n          prompts: {}\n        },\n        serverInfo: {\n          name: 'sibal-mcp-server',\n          version: '1.0.0'\n        }\n      };\n\n    case 'tools/list':\n      return {\n        tools: [\n          {\n            name: 'fetch_notices',\n            description: 'Buscar editais de licitação no PNCP',\n            inputSchema: {\n              type: 'object',\n              properties: {\n                keyword: { type: 'string', description: 'Palavra-chave para busca' },\n                date_from: { type: 'string', description: 'Data inicial (YYYY-MM-DD)' },\n                date_to: { type: 'string', description: 'Data final (YYYY-MM-DD)' },\n                status: { type: 'string', description: 'Status da licitação' }\n              }\n            }\n          },\n          {\n            name: 'risk_classifier',\n            description: 'Classificar risco de uma licitação',\n            inputSchema: {\n              type: 'object',\n              properties: {\n                notice_id: { type: 'string', description: 'ID do edital' },\n                company_profile: { type: 'object', description: 'Perfil da empresa' }\n              },\n              required: ['notice_id']\n            }\n          },\n          {\n            name: 'summarize_notice',\n            description: 'Resumir conteúdo de um edital',\n            inputSchema: {\n              type: 'object',\n              properties: {\n                notice_id: { type: 'string', description: 'ID do edital' },\n                content: { type: 'string', description: 'Conteúdo do edital' }\n              },\n              required: ['notice_id']\n            }\n          },\n          {\n            name: 'process_document',\n            description: 'Processar documento de licitação',\n            inputSchema: {\n              type: 'object',\n              properties: {\n                document_url: { type: 'string', description: 'URL do documento' },\n                document_type: { type: 'string', description: 'Tipo do documento' }\n              },\n              required: ['document_url']\n            }\n          },\n          {\n            name: 'generate_proposal_insights',\n            description: 'Gerar insights para proposta',\n            inputSchema: {\n              type: 'object',\n              properties: {\n                notice_id: { type: 'string', description: 'ID do edital' },\n                company_data: { type: 'object', description: 'Dados da empresa' }\n              },\n              required: ['notice_id']\n            }\n          },\n          {\n            name: 'monitor_deadlines',\n            description: 'Monitorar prazos de licitações',\n            inputSchema: {\n              type: 'object',\n              properties: {\n                days_ahead: { type: 'number', description: 'Dias à frente para monitorar' }\n              }\n            }\n          }\n        ]\n      };\n\n    case 'tools/call':\n      const { name: toolName, arguments: toolArgs } = params;\n      \n      if (mcpTools[toolName]) {\n        try {\n          const result = await mcpTools[toolName](toolArgs);\n          return {\n            content: [\n              {\n                type: 'text',\n                text: JSON.stringify(result, null, 2)\n              }\n            ]\n          };\n        } catch (error) {\n          return {\n            content: [\n              {\n                type: 'text',\n                text: JSON.stringify({\n                  success: false,\n                  error: error.message\n                }, null, 2)\n              }\n            ],\n            isError: true\n          };\n        }\n      } else {\n        return {\n          content: [\n            {\n              type: 'text',\n              text: JSON.stringify({\n                success: false,\n                error: `Tool '${toolName}' not found`\n              }, null, 2)\n            }\n          ],\n          isError: true\n        };\n      }\n\n    default:\n      return {\n        error: {\n          code: -32601,\n          message: `Method '${method}' not found`\n        }\n      };\n  }\n}\n\n// Main execution\ntry {\n  const response = await handleMCPRequest(method, params);\n  \n  return [{\n    json: {\n      jsonrpc: '2.0',\n      id: request.id || 1,\n      result: response\n    }\n  }];\n} catch (error) {\n  return [{\n    json: {\n      jsonrpc: '2.0',\n      id: request.id || 1,\n      error: {\n        code: -32603,\n        message: 'Internal error',\n        data: error.message\n      }\n    }\n  }];\n}"
+      },
+      "id": "mcp-processor",
+      "name": "MCP Processor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Authorization"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "MCP Webhook": {
+      "main": [
+        [
+          {
+            "node": "MCP Processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Processor": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {},
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "SIBAL"
+    },
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "2",
+      "name": "MCP"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

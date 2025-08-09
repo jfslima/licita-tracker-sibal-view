@@ -1,1 +1,1 @@
-# No workspace - single project structure
+// No workspace - single project structure

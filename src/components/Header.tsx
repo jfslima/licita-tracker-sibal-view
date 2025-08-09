@@ -79,6 +79,13 @@ export function Header() {
             >
               Preços
             </a>
+            <a 
+              href="#mcp-integration" 
+              onClick={(e) => { e.preventDefault(); handleNavigation('mcp-integration'); }}
+              className="text-gray-700 hover:text-blue-600 font-medium transition-colors cursor-pointer"
+            >
+              MCP Integration
+            </a>
           </nav>
 
           {/* Ações do Usuário */}

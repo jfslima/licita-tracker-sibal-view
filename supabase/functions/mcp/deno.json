@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "lib": ["deno.window"],
+    "strict": true
+  },
+  "imports": {
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+    "@modelcontextprotocol/sdk/server/": "https://esm.sh/@modelcontextprotocol/sdk/server/",
+    "@modelcontextprotocol/sdk/types": "https://esm.sh/@modelcontextprotocol/sdk/types"
+  },
+  "tasks": {
+    "dev": "deno run --allow-net --allow-env --watch index.ts",
+    "start": "deno run --allow-net --allow-env index.ts",
+    "test": "deno test --allow-net --allow-env"
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false,
+    "proseWrap": "preserve",
+    "include": ["**/*.ts", "**/*.js"],
+    "exclude": ["node_modules/"]
+  },
+  "lint": {
+    "include": ["**/*.ts", "**/*.js"],
+    "exclude": ["node_modules/"]
+  }
+}

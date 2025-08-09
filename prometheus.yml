@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'mcp-server'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:8000'] # Assumindo que o servidor MCP roda localmente na porta 8000
+    metrics_path: '/metrics'

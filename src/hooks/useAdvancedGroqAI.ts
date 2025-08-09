@@ -193,7 +193,7 @@ Seja preciso, técnico e prático.`;
 
   const exportConversation = () => {
     const conversationText = messages.map(m => 
-      `[${m.timestamp.toLocaleString('pt-BR')}] ${m.role.toUpperCase()}: ${m.content}`
+      `[${(m.timestamp || new Date()).toLocaleString('pt-BR')}] ${m.role.toUpperCase()}: ${m.content}`
     ).join('\n\n');
     
     const blob = new Blob([conversationText], { type: 'text/plain' });

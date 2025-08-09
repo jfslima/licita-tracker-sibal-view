@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "sibal-licita-tracker": {
+      "command": "node",
+      "args": [
+        "d:\\SIBAL\\licita-tracker-sibal-view\\mcp-external-connection.cjs"
+      ],
+      "env": {
+        "SIBAL_WEBHOOK_URL": "http://localhost:5678/webhook/mcp",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

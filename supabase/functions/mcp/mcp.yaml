@@ -1,0 +1,278 @@
+# Configuração MCP para SIBAL Licita-Tracker
+name: sibal-licita-tracker-mcp
+version: "2.0.0"
+description: "Sistema Inteligente Brasileiro de Análise de Licitações - Servidor MCP Unificado"
+
+# Configurações do servidor
+server:
+  name: "SIBAL MCP Server"
+  version: "2.0.0"
+  protocol_version: "2024-11-05"
+  capabilities:
+    tools: true
+    resources: false
+    prompts: false
+    logging: true
+
+# Ferramentas disponíveis
+tools:
+  fetch_notices:
+    name: "fetch_notices"
+    description: "Busca editais de licitação com filtros avançados e análise inteligente"
+    category: "search"
+    tags: ["licitacao", "busca", "filtros"]
+    input_schema:
+      type: "object"
+      properties:
+        query:
+          type: "string"
+          description: "Termo de busca nos títulos e descrições"
+        organ:
+          type: "string"
+          description: "Órgão público específico"
+        modality:
+          type: "string"
+          description: "Modalidade da licitação (Pregão, Concorrência, etc.)"
+        value_min:
+          type: "number"
+          description: "Valor mínimo estimado em reais"
+        value_max:
+          type: "number"
+          description: "Valor máximo estimado em reais"
+        limit:
+          type: "number"
+          description: "Limite de resultados (padrão: 20, máximo: 100)"
+          default: 20
+          maximum: 100
+
+  risk_classifier:
+    name: "risk_classifier"
+    description: "Classifica o risco de participação em uma licitação usando IA"
+    category: "analysis"
+    tags: ["risco", "ia", "classificacao"]
+    input_schema:
+      type: "object"
+      properties:
+        notice_id:
+          type: "string"
+          description: "ID único do edital"
+        company_profile:
+          type: "string"
+          description: "Perfil da empresa para análise personalizada"
+      required: ["notice_id"]
+
+  summarize_notice:
+    name: "summarize_notice"
+    description: "Gera resumo executivo inteligente de um edital"
+    category: "analysis"
+    tags: ["resumo", "ia", "analise"]
+    input_schema:
+      type: "object"
+      properties:
+        notice_id:
+          type: "string"
+          description: "ID único do edital"
+        focus_areas:
+          type: "array"
+          items:
+            type: "string"
+          description: "Áreas específicas para focar no resumo"
+      required: ["notice_id"]
+
+  process_document:
+    name: "process_document"
+    description: "Processa documentos de licitação (PDF, Word, Excel) com OCR e IA"
+    category: "processing"
+    tags: ["documento", "ocr", "extracao"]
+    input_schema:
+      type: "object"
+      properties:
+        document_url:
+          type: "string"
+          format: "uri"
+          description: "URL do documento para processamento"
+        document_type:
+          type: "string"
+          enum: ["edital", "anexo", "ata", "resultado"]
+          description: "Tipo do documento"
+        notice_id:
+          type: "string"
+          description: "ID da licitação relacionada"
+        extract_tables:
+          type: "boolean"
+          default: true
+          description: "Extrair tabelas do documento"
+        extract_requirements:
+          type: "boolean"
+          default: true
+          description: "Extrair requisitos e especificações"
+      required: ["document_url", "document_type"]
+
+  generate_proposal_insights:
+    name: "generate_proposal_insights"
+    description: "Gera insights estratégicos para elaboração de propostas"
+    category: "strategy"
+    tags: ["proposta", "estrategia", "insights"]
+    input_schema:
+      type: "object"
+      properties:
+        notice_id:
+          type: "string"
+          description: "ID da licitação"
+        company_profile:
+          type: "object"
+          description: "Perfil detalhado da empresa"
+          properties:
+            name:
+              type: "string"
+            cnpj:
+              type: "string"
+            sector:
+              type: "string"
+            size:
+              type: "string"
+              enum: ["micro", "pequena", "media", "grande"]
+            experience_years:
+              type: "number"
+            specialties:
+              type: "array"
+              items:
+                type: "string"
+            certifications:
+              type: "array"
+              items:
+                type: "string"
+        historical_proposals:
+          type: "array"
+          description: "Histórico de propostas anteriores"
+        competitors:
+          type: "array"
+          description: "Informações sobre concorrentes"
+      required: ["notice_id"]
+
+  monitor_deadlines:
+    name: "monitor_deadlines"
+    description: "Monitora prazos de licitações e gera alertas inteligentes"
+    category: "monitoring"
+    tags: ["prazos", "alertas", "monitoramento"]
+    input_schema:
+      type: "object"
+      properties:
+        company_id:
+          type: "string"
+          description: "ID da empresa"
+        days_ahead:
+          type: "number"
+          default: 7
+          minimum: 1
+          maximum: 30
+          description: "Dias de antecedência para alertas"
+        deadline_types:
+          type: "array"
+          items:
+            type: "string"
+            enum: ["opening", "proposal_submission", "public_session", "appeal"]
+          default: ["proposal_submission", "public_session"]
+          description: "Tipos de prazos para monitorar"
+      required: ["company_id"]
+
+# Configurações de integração
+integrations:
+  supabase:
+    enabled: true
+    database_url: "${SUPABASE_URL}"
+    anon_key: "${SUPABASE_ANON_KEY}"
+    service_role_key: "${SUPABASE_SERVICE_ROLE_KEY}"
+    
+  groq:
+    enabled: true
+    api_key: "${GROQ_API_KEY}"
+    model: "llama-3.1-70b-versatile"
+    max_tokens: 4000
+    temperature: 0.3
+
+# Configurações de segurança
+security:
+  cors:
+    enabled: true
+    origins: ["*"]
+    methods: ["GET", "POST", "OPTIONS"]
+    headers: ["authorization", "x-client-info", "apikey", "content-type"]
+  
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 60
+    requests_per_hour: 1000
+  
+  authentication:
+    required: false
+    methods: ["supabase_jwt"]
+
+# Configurações de logging
+logging:
+  level: "info"
+  structured: true
+  include_request_id: true
+  include_user_id: true
+  
+  destinations:
+    - type: "console"
+      enabled: true
+    - type: "supabase"
+      enabled: true
+      table: "mcp_logs"
+
+# Configurações de performance
+performance:
+  timeout_seconds: 30
+  max_concurrent_requests: 10
+  cache:
+    enabled: true
+    ttl_seconds: 300
+    max_size_mb: 100
+
+# Configurações de monitoramento
+monitoring:
+  health_check:
+    enabled: true
+    endpoint: "/health"
+    interval_seconds: 30
+  
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    include_system_metrics: true
+    include_business_metrics: true
+
+# Configurações de desenvolvimento
+development:
+  debug: false
+  hot_reload: false
+  mock_external_apis: false
+  
+  test_data:
+    enabled: false
+    sample_notices: 10
+    sample_companies: 5
+
+# Metadados
+metadata:
+  author: "SIBAL Team"
+  license: "MIT"
+  repository: "https://github.com/sibal/licita-tracker"
+  documentation: "https://docs.sibal.com.br/mcp"
+  support_email: "suporte@sibal.com.br"
+  
+  tags:
+    - "licitacoes"
+    - "governo"
+    - "brasil"
+    - "ia"
+    - "mcp"
+    - "supabase"
+  
+  categories:
+    - "Government"
+    - "AI/ML"
+    - "Business Intelligence"
+    - "Document Processing"

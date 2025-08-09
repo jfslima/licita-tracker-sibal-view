@@ -16,6 +16,12 @@ dist-ssr
 *.env*
 !*.example
 
+# N8N specific
+.env.n8n
+n8n_backup_*.tar.gz
+packages/n8n/.env
+packages/n8n/data/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

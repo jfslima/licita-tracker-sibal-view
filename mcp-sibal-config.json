@@ -1,0 +1,101 @@
+{
+  "mcpServers": {
+    "sibal-licita-tracker": {
+      "command": "node",
+      "args": ["mcp-external-connection.cjs"],
+      "env": {
+        "SIBAL_WEBHOOK_URL": "http://localhost:5678/webhook/mcp"
+      }
+    }
+  },
+  "serverInfo": {
+    "name": "SIBAL MCP Server",
+    "version": "1.0.0",
+    "description": "MCP Server para rastreamento de licitações SIBAL",
+    "webhookUrl": "http://localhost:5678/webhook/mcp",
+    "protocol": "JSON-RPC 2.0"
+  },
+  "capabilities": {
+    "tools": [
+      {
+        "name": "search_notices",
+        "description": "Busca editais de licitação no PNCP",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Termo de busca"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Limite de resultados",
+              "default": 10
+            }
+          },
+          "required": ["query"]
+        }
+      },
+      {
+        "name": "get_notice_details",
+        "description": "Obtém detalhes de um edital específico",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "noticeId": {
+              "type": "string",
+              "description": "ID do edital"
+            }
+          },
+          "required": ["noticeId"]
+        }
+      }
+    ]
+  },
+  "usage": {
+    "examples": [
+      {
+        "method": "initialize",
+        "description": "Inicializar conexão MCP",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 1,
+          "method": "initialize",
+          "params": {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {"tools": {}},
+            "clientInfo": {
+              "name": "client-name",
+              "version": "1.0.0"
+            }
+          }
+        }
+      },
+      {
+        "method": "tools/list",
+        "description": "Listar ferramentas disponíveis",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 2,
+          "method": "tools/list"
+        }
+      },
+      {
+        "method": "tools/call",
+        "description": "Buscar editais",
+        "request": {
+          "jsonrpc": "2.0",
+          "id": 3,
+          "method": "tools/call",
+          "params": {
+            "name": "search_notices",
+            "arguments": {
+              "query": "equipamentos médicos",
+              "limit": 5
+            }
+          }
+        }
+      }
+    ]
+  }
+}
