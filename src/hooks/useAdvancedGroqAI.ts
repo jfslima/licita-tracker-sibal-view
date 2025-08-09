@@ -24,7 +24,7 @@ export function useAdvancedGroqAI() {
   const [analysisHistory, setAnalysisHistory] = useState<AnalysisResult[]>([]);
   const { toast } = useToast();
 
-  const GROQ_API_KEY = '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';
+  const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
   const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
   const getModePrompt = (mode: string) => {

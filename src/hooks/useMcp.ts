@@ -37,7 +37,7 @@ export function useMcp(): UseMcpReturn {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5nY2ZhdmRrbWxmanZjcWpxZnRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ5NzY3NzEsImV4cCI6MjA1MDU1Mjc3MX0.Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8'
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
         },
         body: JSON.stringify({
           jsonrpc: '2.0',
