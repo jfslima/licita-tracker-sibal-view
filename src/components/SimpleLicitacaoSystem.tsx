@@ -69,8 +69,8 @@ export function SimpleLicitacaoSystem() {
 
     setLoading(true);
     try {
-      // Usar proxy local em vez da API direta do PNCP
-      const url = new URL('http://localhost:3002/api/pncp/search');
+      // Usar proxy configurado no Vite (/api/pncp -> pncp.gov.br)
+      const url = new URL('/api/pncp/search', window.location.origin);
       url.searchParams.append('tipos_documento', tipoDoc);
       url.searchParams.append('q', keyword.trim()); // Usar 'q' em vez de 'palavra_chave'
       url.searchParams.append('ordenacao', '-data');

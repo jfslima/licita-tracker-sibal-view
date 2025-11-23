@@ -1,9 +1,8 @@
 // Configurações para integração com o Portal Nacional de Contratações Públicas (PNCP)
 
 export const PNCP_CONFIG = {
-  // URL base da API oficial do PNCP (conforme site oficial)
-  // URL base da API oficial de consulta do PNCP via proxy local
-  BASE_URL: 'http://localhost:3002/api/pncp',
+  // URL base da API oficial do PNCP via proxy configurado no Vite
+  BASE_URL: '/api/pncp',
   
   // URL alternativa para ambiente de treinamento
   BASE_URL_TRAINING: 'https://treina.pncp.gov.br/api/pncp',

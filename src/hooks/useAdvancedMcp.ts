@@ -233,7 +233,7 @@ export function useAdvancedMcp() {
       // Fallback: tentar buscar do PNCP se não encontrou no Supabase
       if (!licitacaoData) {
         try {
-          const response = await fetch(`http://localhost:3002/api/pncp/consulta/v1/contratacoes/${licitacaoId}`);
+          const response = await fetch(`/api/pncp/consulta/v1/contratacoes/${licitacaoId}`);
           if (response.ok) {
             licitacaoData = await response.json();
           }
@@ -294,7 +294,7 @@ export function useAdvancedMcp() {
       
       // Tentar buscar dados da licitação do PNCP
       try {
-        const response = await fetch(`http://localhost:3002/api/pncp/consulta/v1/contratacoes/${licitacaoId}`);
+        const response = await fetch(`/api/pncp/consulta/v1/contratacoes/${licitacaoId}`);
         if (response.ok) {
           licitacaoData = await response.json();
         }
@@ -814,7 +814,7 @@ export function useAdvancedMcp() {
       // Fallback: buscar do PNCP se não encontrou no Supabase
       if (!licitacaoData) {
         try {
-          const response = await fetch(`http://localhost:3002/api/pncp/consulta/v1/contratacoes/${licitacaoId}`);
+          const response = await fetch(`/api/pncp/consulta/v1/contratacoes/${licitacaoId}`);
           if (response.ok) {
             licitacaoData = await response.json();
           }
@@ -1478,8 +1478,8 @@ export function useAdvancedMcp() {
         params.append('pagina', page.toString());
       }
 
-      // Buscar dados reais da API do PNCP através do proxy local
-      const response = await fetch(`http://localhost:3002/api/pncp/search?${params.toString()}`, {
+      // Buscar dados reais da API do PNCP através do proxy configurado no Vite
+      const response = await fetch(`/api/pncp/search?${params.toString()}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
