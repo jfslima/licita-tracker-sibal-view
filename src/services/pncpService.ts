@@ -1,10 +1,10 @@
 // Serviço para integração com a API do Portal Nacional de Contratações Públicas (PNCP)
 // Baseado na documentação oficial: https://pncp.gov.br/api/pncp/v1/docs
 
-const USE_PROXY = true;
+const USE_PROXY = false;
 
 const DIRECT_BASE = 'https://pncp.gov.br/api/search/';      // chamada direta (pode ter CORS)
-const PROXY_BASE  = 'http://localhost:3002/api/pncp/search';    // rota correta do proxy
+const PROXY_BASE  = '/api/pncp/search';    // proxy via vite configurado no vite.config.ts
 
 const BASE = USE_PROXY ? PROXY_BASE : DIRECT_BASE;
 
