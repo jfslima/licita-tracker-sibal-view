@@ -1795,7 +1795,6 @@ export function useAdvancedMcp() {
     generateProposalInsights,
     monitorDeadlines,
     generateMarketReport,
-    chatWithMcp,
     populateWithSampleData,
     fetchRealLicitacoes
   };

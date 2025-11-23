@@ -10,7 +10,6 @@ import { Link } from 'react-router-dom';
 import { gerarUrlPncp } from '@/utils/pncpUtils';
 import { useMcpAI } from '../hooks/useMcpAI';
 import { useSupabaseMcp } from '../hooks/useSupabaseMcp';
-import { AdvancedMcpDashboard } from './AdvancedMcpDashboard';
 import { PNCP_SEARCH } from '@/config/api';
 
 interface LicitacaoPNCP {
@@ -917,17 +916,13 @@ Forneça insights avançados e recomendações práticas para decisão estratég
                   ✕
                 </Button>
               </div>
-              <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-auto p-4">
                 {selectedLicitacao && (
-                  <AdvancedMcpDashboard 
-                    selectedLicitacao={{
-                      id: selectedLicitacao.id,
-                      titulo: selectedLicitacao.objeto,
-                      orgao: selectedLicitacao.orgao_nome,
-                      valor: selectedLicitacao.valor_global || 0,
-                      dataPublicacao: selectedLicitacao.data_publicacao_pncp
-                    }} 
-                  />
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">{selectedLicitacao.objeto}</h3>
+                    <p className="text-sm text-muted-foreground">Órgão: {selectedLicitacao.orgao_nome}</p>
+                    <p className="text-sm">Valor: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(selectedLicitacao.valor_global || 0)}</p>
+                  </div>
                 )}
               </div>
             </div>
