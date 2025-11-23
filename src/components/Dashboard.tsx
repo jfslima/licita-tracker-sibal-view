@@ -56,7 +56,7 @@ export function Dashboard() {
       
       try {
         // 1. Buscar editais ativos do PNCP
-        const responseAtivos = await pncpService.buscarEditaisAtivos(undefined, 1);
+        const responseAtivos = await pncpService.buscarEditaisAtivos();
         console.log('✅ Dados do PNCP recebidos:', responseAtivos);
         
         // 2. Buscar mais páginas sequencialmente para evitar rate limit
@@ -67,7 +67,7 @@ export function Dashboard() {
           console.log(`🔄 Buscando página ${pagina}/${maxPaginas}...`);
           // Aguardar 3 segundos entre requisições
           await new Promise(resolve => setTimeout(resolve, 3000));
-          const response = await pncpService.buscarEditaisAtivos(undefined, pagina);
+          const response = await pncpService.buscarEditaisAtivos();
           responses.push(response);
         }
         
@@ -126,9 +126,9 @@ export function Dashboard() {
           if (error) throw error;
           
           const total = licitacoes?.length || 0;
-          const valorTotal = licitacoes?.reduce((sum, lic) => sum + (lic.valor_estimado || 0), 0) || 0;
+          const valorTotal = licitacoes?.reduce((sum, lic) => sum + (lic.valor || 0), 0) || 0;
           const recentes = licitacoes?.filter(lic => {
-            const dataPublicacao = new Date(lic.data_publicacao);
+            const dataPublicacao = new Date(lic.criado_em);
             const agora = new Date();
             const diffDias = (agora.getTime() - dataPublicacao.getTime()) / (1000 * 3600 * 24);
             return diffDias <= 7;

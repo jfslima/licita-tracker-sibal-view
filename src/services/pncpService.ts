@@ -74,6 +74,7 @@ export async function buscarEditais({
 
   const response: PNCPResponse = {
     items: transformedItems,
+    total: transformedItems.length,
     links: {
       first: '',
       last: '',
@@ -347,6 +348,7 @@ class PNCPService {
         
         const result: PNCPResponse = {
           items: transformedItems,
+          total: transformedItems.length,
           links: {
             first: '',
             last: '',
