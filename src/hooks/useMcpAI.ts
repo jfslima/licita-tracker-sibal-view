@@ -9,48 +9,26 @@ export interface Message {
   timestamp: Date;
 }
 
-// Cliente para comunicação direta com a função ai-chat do Supabase
+// Cliente para comunicação com Lovable AI através da Edge Function
 const aiChatClient = {
   async sendMessage(messages: any[]): Promise<any> {
     try {
-      // Usar URL e chave do arquivo .env.local
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'http://127.0.0.1:54321';
-      const supabaseKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+      console.log('Chamando Edge Function chat-ai com Lovable AI...');
       
-      const response = await fetch(`${supabaseUrl}/functions/v1/ai-chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
-        },
-        body: JSON.stringify({
-          messages: messages
-        })
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: { messages }
       });
       
-      if (!response.ok) {
-        throw new Error(`Erro na comunicação com IA: ${response.status}`);
+      if (error) {
+        console.error('Erro na Edge Function:', error);
+        throw new Error(error.message || 'Erro ao chamar Edge Function');
       }
       
-      const responseText = await response.text();
-      
-      // Tentar fazer parse do JSON
-      let responseData;
-      try {
-        responseData = JSON.parse(responseText);
-      } catch (parseError) {
-        // Se não for JSON válido, usar o texto diretamente
-        return { content: responseText };
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'Resposta inválida da IA');
       }
       
-      // Verificar se há erro na resposta
-      if (responseData.error) {
-        throw new Error(responseData.error);
-      }
-      
-      // Retornar o conteúdo, tratando diferentes formatos de resposta
-      const content = responseData.response || responseData.content || responseData.message || responseText;
-      return { content };
+      return { content: data.response };
     } catch (error) {
       console.error('Erro na comunicação com IA:', error);
       throw error;
