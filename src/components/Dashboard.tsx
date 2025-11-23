@@ -55,24 +55,11 @@ export function Dashboard() {
       console.log('🔄 Iniciando busca de dados do PNCP...');
       
       try {
-        // 1. Buscar editais ativos do PNCP
+        // Buscar editais ativos do PNCP (apenas primeira página para carregamento rápido)
         const responseAtivos = await pncpService.buscarEditaisAtivos();
         console.log('✅ Dados do PNCP recebidos:', responseAtivos);
         
-        // 2. Buscar mais páginas sequencialmente para evitar rate limit
-        const responses = [responseAtivos];
-        const maxPaginas = 3; // Máximo 3 páginas
-        
-        for (let pagina = 2; pagina <= maxPaginas; pagina++) {
-          console.log(`🔄 Buscando página ${pagina}/${maxPaginas}...`);
-          // Aguardar 3 segundos entre requisições
-          await new Promise(resolve => setTimeout(resolve, 3000));
-          const response = await pncpService.buscarEditaisAtivos();
-          responses.push(response);
-        }
-        
-        const todosEditais: PNCPEdital[] = responses.flatMap(response => response.items);
-        
+        const todosEditais: PNCPEdital[] = responseAtivos.items || [];
         console.log(`📊 Total de editais coletados: ${todosEditais.length}`);
         
         // 3. Calcular estatísticas
