@@ -114,10 +114,10 @@ export function LicitacaoMcpDashboard() {
         params.append('q', searchTerm.trim());
       }
 
-      // Usar proxy local em vez da API direta do PNCP
+      // Usar proxy configurado no Vite (/api/pncp -> pncp.gov.br)
       let response;
       try {
-        response = await fetch(`http://localhost:3002/api/pncp/search?${params.toString()}`, {
+        response = await fetch(`/api/pncp/search?${params.toString()}`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
