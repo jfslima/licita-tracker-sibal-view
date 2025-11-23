@@ -4,13 +4,13 @@
  */
 
 // URL base da API - usa variável de ambiente ou fallback para localhost
-export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3002';
+export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 // Endpoints PNCP - URLs oficiais da API pública
-export const PNCP_SEARCH = 'http://localhost:3002/api/pncp/search';
-export const PNCP_API_BASE = 'http://localhost:3002/api/pncp';
-export const PNCP_DOWNLOAD = `${API_BASE}/api/pncp/pncp-api/v1`;
-export const PNCP_CONTRATACOES_DETAIL = `${API_BASE}/api/pncp/consulta/v1/contratacoes`;
+export const PNCP_SEARCH = 'https://pncp.gov.br/api/search/';
+export const PNCP_API_BASE = 'https://pncp.gov.br/api';
+export const PNCP_DOWNLOAD = 'https://pncp.gov.br/api/pncp-api/v1';
+export const PNCP_CONTRATACOES_DETAIL = 'https://pncp.gov.br/api/consulta/v1/contratacoes';
 
 /**
  * Função para construir URL de busca PNCP com parâmetros
